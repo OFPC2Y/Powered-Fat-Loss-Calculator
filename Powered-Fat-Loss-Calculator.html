@@ -1,0 +1,1808 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>带电操作减脂食谱计算器</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --card: #ffffff;
+    --primary: #0ea5a0;
+    --primary-light: #eefdfc;
+    --primary-dark: #0f766e;
+    --text: #1e293b;
+    --text-secondary: #64748b;
+    --border: #e2e8f0;
+    --radius: 16px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.06);
+    --green: #16a34a;
+    --orange: #f59e0b;
+    --red: #dc2626;
+    --blue: #2563eb;
+    --purple: #8b5cf6;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 20px;
+    line-height: 1.6;
+  }
+  .container { max-width: 1120px; margin: 0 auto; padding-bottom: 80px; }
+  header { text-align: center; padding: 28px 0 20px; }
+  header h1 {
+    font-size: 28px; font-weight: 800;
+    background: linear-gradient(135deg, var(--primary), var(--blue));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  header p { color: var(--text-secondary); margin-top: 6px; font-size: 14px; }
+
+  .layout { display: grid; grid-template-columns: 420px 1fr; gap: 22px; align-items: start; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--card); border-radius: var(--radius); padding: 20px;
+    box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 16px;
+  }
+  .card h2 {
+    font-size: 15px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+  }
+  .card h2 .icon { width: 26px; height: 26px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; }
+
+  details.form-section { border: 1px solid var(--border); border-radius: 14px; background: var(--card); margin-bottom: 12px; box-shadow: var(--shadow); overflow: hidden; }
+  details.form-section > summary {
+    list-style: none; cursor: pointer; padding: 14px 18px; font-weight: 700; font-size: 14px;
+    display: flex; align-items: center; gap: 8px; user-select: none; color: var(--text);
+  }
+  details.form-section > summary::-webkit-details-marker { display: none; }
+  details.form-section > summary .arrow { margin-left: auto; color: var(--text-secondary); transition: transform .2s; }
+  details.form-section[open] > summary .arrow { transform: rotate(180deg); }
+  details.form-section > .body { padding: 2px 18px 18px; }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-group { margin-bottom: 12px; }
+  .form-group label { display: block; font-size: 12.5px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 9px 11px; border: 1.5px solid var(--border); border-radius: 10px;
+    font-size: 14.5px; color: var(--text); background: var(--card); outline: none; font-family: inherit;
+    transition: border-color .2s;
+  }
+  .form-group textarea { resize: vertical; min-height: 56px; }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(14,165,160,0.12); }
+  .form-group .hint { font-size: 11.5px; color: var(--text-secondary); margin-top: 3px; }
+
+  .gender-toggle { display: flex; gap: 8px; }
+  .gender-btn { flex: 1; padding: 9px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--card); cursor: pointer; font-size: 14px; text-align: center; color: var(--text-secondary); transition: all .15s; }
+  .gender-btn.active-male { border-color: var(--blue); background: #eff6ff; color: var(--blue); font-weight: 700; }
+  .gender-btn.active-female { border-color: #ec4899; background: #fdf2f8; color: #ec4899; font-weight: 700; }
+
+  .check-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 14px; }
+  .check-item { display: flex; align-items: center; gap: 7px; font-size: 13.5px; color: var(--text); cursor: pointer; }
+  .check-item input { width: 15px; height: 15px; accent-color: var(--primary); }
+
+  .btn-calc {
+    width: 100%; padding: 13px; background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer;
+    transition: opacity .2s, transform .1s;
+  }
+  .btn-calc:hover { opacity: .93; }
+  .btn-calc:active { transform: scale(.99); }
+
+  /* 结果区 */
+  #placeholder-area .card { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 380px; text-align: center; }
+  .banner { padding: 14px 16px; border-radius: 12px; font-size: 13.5px; margin-bottom: 14px; line-height: 1.7; }
+  .banner.warn { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+  .banner.risk { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+  .banner.info { background: var(--primary-light); border: 1px solid #99f6e4; color: #134e4a; }
+  .banner b { font-weight: 700; }
+
+  .stat-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+  @media (max-width: 560px) { .stat-group { grid-template-columns: 1fr 1fr; } }
+  .stat-card { background: var(--bg); border-radius: 12px; padding: 14px; text-align: center; }
+  .stat-card .stat-label { font-size: 11.5px; color: var(--text-secondary); font-weight: 600; }
+  .stat-card .stat-value { font-size: 26px; font-weight: 800; margin: 2px 0; }
+  .stat-card .stat-unit { font-size: 12px; color: var(--text-secondary); }
+  .stat-card.t1 .stat-value { color: var(--blue); }
+  .stat-card.t2 .stat-value { color: var(--primary); }
+  .stat-card.t3 .stat-value { color: var(--orange); }
+
+  .macro-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+  @media (max-width: 560px) { .macro-grid { grid-template-columns: 1fr; } }
+  .macro-card { border-radius: 12px; padding: 14px; text-align: center; border: 1.5px solid var(--border); }
+  .macro-card.protein { border-color: #bfdbfe; background: #eff6ff; }
+  .macro-card.carbs { border-color: #fde68a; background: #fffbeb; }
+  .macro-card.fat { border-color: #fecaca; background: #fef2f2; }
+  .macro-card .macro-name { font-size: 12px; font-weight: 700; letter-spacing: .5px; }
+  .macro-card .macro-grams { font-size: 25px; font-weight: 800; margin: 2px 0; }
+  .macro-card .macro-kcal { font-size: 12px; color: var(--text-secondary); }
+  .macro-card.protein .macro-grams { color: var(--blue); }
+  .macro-card.carbs .macro-grams { color: var(--orange); }
+  .macro-card.fat .macro-grams { color: var(--red); }
+
+  .section-title { font-size: 15px; font-weight: 700; margin: 20px 0 10px; display: flex; align-items: center; gap: 8px; }
+  .section-title .icon { width: 26px; height: 26px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; }
+
+  .meal-card { border: 1.5px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+  .meal-card .meal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .meal-card .meal-name { font-weight: 800; font-size: 14.5px; }
+  .meal-card .meal-kcal { font-size: 12.5px; color: var(--text-secondary); }
+  .meal-item { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 14px; border-bottom: 1px dashed var(--border); }
+  .meal-item:last-child { border-bottom: none; }
+  .meal-item .food { font-weight: 600; }
+  .meal-item .amt { color: var(--primary-dark); font-weight: 700; white-space: nowrap; }
+  .meal-item .how { color: var(--text-secondary); font-size: 12.5px; margin-left: auto; text-align: right; }
+  .swap-selects { margin-top: 10px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 12px; }
+  .swap-select { display: flex; align-items: center; gap: 8px; }
+  .swap-select label { font-size: 12.5px; font-weight: 600; color: var(--text-secondary); white-space: nowrap; }
+  .swap-select select { flex: 1; min-width: 0; padding: 6px 8px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px; color: var(--text); background: var(--card); outline: none; font-family: inherit; cursor: pointer; }
+  .swap-select select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(14,165,160,0.12); }
+  .swap-note { grid-column: 1 / -1; font-size: 12px; color: var(--text-secondary); }
+
+  table.buy { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.buy th, table.buy td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+  table.buy th { font-size: 12px; color: var(--text-secondary); font-weight: 700; background: var(--bg); }
+  table.buy td.num { white-space: nowrap; }
+
+  .detail-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13.5px; border-bottom: 1px solid var(--border); }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-row .label { color: var(--text-secondary); }
+  .detail-row .value { font-weight: 600; text-align: right; }
+
+  .check-list { margin-top: 8px; }
+  .check-item-row { padding: 7px 10px; border-radius: 8px; font-size: 13px; margin-bottom: 5px; }
+  .check-item-row.pass { background: #f0fdf4; color: #166534; }
+  .check-item-row.warn { background: #fffbeb; color: #92400e; }
+
+  .footnote { margin-top: 14px; padding: 12px 14px; background: var(--bg); border-radius: 10px; font-size: 12px; color: var(--text-secondary); line-height: 1.8; }
+  .hidden { display: none; }
+
+  /* 保存 PDF：右下角悬浮按钮 */
+  .btn-pdf {
+    position: fixed; right: 20px; bottom: 20px; z-index: 1000;
+    padding: 12px 20px; border: none; border-radius: 999px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff;
+    font-size: 15px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 6px 20px rgba(14,165,160,.35);
+    transition: transform .15s, opacity .2s;
+  }
+  .btn-pdf:hover { transform: translateY(-2px); }
+  .btn-pdf:disabled { opacity: .6; cursor: wait; }
+
+  /* 浮动「生成我的减脂方案」按钮：与原按钮同款，仅当原按钮滚到视口上方后出现，
+     贴在左侧表单列同一位置；滑回原按钮（如页面底部）时自动归位隐藏。 */
+  .btn-float-calc {
+    position: fixed;
+    left: max(20px, calc((100vw - 1120px) / 2));
+    bottom: 20px;
+    width: 420px;
+    max-width: calc(100vw - 40px);
+    z-index: 999;
+    padding: 13px;
+    border: none; border-radius: 12px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff;
+    font-size: 16px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 6px 20px rgba(14,165,160,.35);
+    transition: transform .18s, opacity .2s;
+    opacity: 0; pointer-events: none; transform: translateY(10px);
+  }
+  .btn-float-calc.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
+  .btn-float-calc:hover { opacity: .93; }
+  @media (max-width: 900px) {
+    .btn-float-calc { left: 20px; right: 20px; width: auto; }
+  }
+
+  /* PDF 导出临时渲染区（屏幕外，供 html2canvas 截图；打印时移回可视区） */
+  #pdfHolder {
+    position: absolute; left: -10000px; top: 0; width: 760px;
+    background: #fff; color: #1e293b; font-size: 13px; line-height: 1.6;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  #pdfHolder .sec { width: 720px; margin: 0 auto 20px; }
+  #pdfHolder .ptitle { font-size: 24px; font-weight: 800; text-align: center; margin: 8px 0 2px; color: #0f766e; }
+  #pdfHolder .pdate { font-size: 12px; color: #64748b; text-align: center; margin-bottom: 14px; }
+  #pdfHolder .sec h2 { font-size: 15px; font-weight: 800; margin: 0 0 10px; padding: 8px 12px; background: #f1f5f9; border-radius: 8px; color: #0f766e; }
+  #pdfHolder .kv { width: 100%; border-collapse: collapse; font-size: 13px; }
+  #pdfHolder .kv td { padding: 5px 10px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+  #pdfHolder .kv td.k { color: #64748b; white-space: nowrap; width: 34%; }
+  #pdfHolder .kv td.v { font-weight: 600; }
+  #pdfHolder .warn { font-size: 12.5px; color: #92400e; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 8px 12px; margin-bottom: 8px; }
+  #pdfHolder .meal { border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
+  #pdfHolder .meal b { font-size: 13.5px; }
+  #pdfHolder .meal table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 12.5px; }
+  #pdfHolder .meal table td { padding: 3px 8px; border-bottom: 1px dashed #e2e8f0; }
+  #pdfHolder .meal table td:first-child { font-weight: 600; }
+  #pdfHolder .meal table td:nth-child(2) { color: #0f766e; font-weight: 700; white-space: nowrap; }
+  #pdfHolder .meal table td:last-child { color: #64748b; text-align: right; }
+  #pdfHolder .buy { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  #pdfHolder .buy th, #pdfHolder .buy td { padding: 5px 8px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+  #pdfHolder .buy th { background: #f1f5f9; font-size: 12px; color: #64748b; }
+  #pdfHolder .ck { font-size: 12.5px; padding: 6px 10px; border-radius: 6px; margin-bottom: 5px; }
+  #pdfHolder .ck.pass { background: #f0fdf4; color: #166534; }
+  #pdfHolder .ck.warn { background: #fffbeb; color: #92400e; }
+  #pdfHolder .note { font-size: 11.5px; color: #64748b; line-height: 1.7; margin-top: 6px; }
+  #pdfHolder .foot { margin-top: 4px; font-size: 11.5px; color: #64748b; line-height: 1.8; }
+
+  @media print {
+    body > .container, .btn-pdf { display: none !important; }
+    #pdfHolder { position: static !important; left: auto !important; width: auto !important; }
+    #pdfHolder .sec { width: auto; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>⚡ 带电操作减脂食谱计算器</h1>
+    <p>估算每日能量 → 分配三大营养素 → 生成一日三餐 → 汇总 7 天采购清单</p>
+  </header>
+
+  <div class="layout">
+    <!-- ============ 左：信息采集 ============ -->
+    <div id="form-column">
+
+      <details class="form-section" open>
+        <summary><span>① 基础信息</span><span class="arrow">▾</span></summary>
+        <div class="body">
+          <div class="form-group">
+            <label>性别</label>
+            <div class="gender-toggle" id="genderToggle">
+              <div class="gender-btn" data-gender="male" onclick="setGender('male')">♂ 男性</div>
+              <div class="gender-btn active-female" data-gender="female" onclick="setGender('female')">♀ 女性</div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>年龄（岁）</label><input type="number" id="age" value="25" min="18" max="80"></div>
+            <div class="form-group"><label>身高（cm）</label><input type="number" id="height" value="165" min="120" max="230" step="0.5"></div>
+          </div>
+          <div class="form-group"><label>体重（kg）</label><input type="number" id="weight" value="60" min="30" max="300" step="0.5"></div>
+          <div class="form-group">
+            <label>目标节奏</label>
+            <select id="pace">
+              <option value="maintain">维持体重（缺口 0）</option>
+              <option value="mild">温和减脂（每日缺口约 300 kcal）</option>
+              <option value="standard" selected>标准减脂（每日缺口约 500 kcal）</option>
+              <option value="fast">较快减脂（每日缺口约 700 kcal，较激进）</option>
+            </select>
+            <div class="hint">这是可执行的初始目标（估算值），建议执行 2～3 周后按实际体重变化校准。</div>
+          </div>
+          <div class="form-group">
+            <label>每日餐次</label>
+            <select id="mealCount">
+              <option value="3" selected>一日三餐</option>
+              <option value="5">一日五餐（含两次加餐）</option>
+            </select>
+          </div>
+        </div>
+      </details>
+
+      <details class="form-section" open>
+        <summary><span>② 工作与活动</span><span class="arrow">▾</span></summary>
+        <div class="body">
+          <div class="form-group">
+            <label>工作性质</label>
+            <select id="workType">
+              <option value="sedentary" selected>久坐办公室工作</option>
+              <option value="light">轻体力工作</option>
+              <option value="medium">中等体力工作</option>
+              <option value="heavy">重体力工作</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>日常活动量（工作以外）</label>
+            <select id="dailyActivity">
+              <option value="minimal">很少（基本不动）</option>
+              <option value="low" selected>较少</option>
+              <option value="medium">较多</option>
+              <option value="high">很多（常走动/家务/遛娃等）</option>
+            </select>
+          </div>
+        </div>
+      </details>
+
+      <details class="form-section" open>
+        <summary><span>③ 饮食与生活</span><span class="arrow">▾</span></summary>
+        <div class="body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>饮食方式</label>
+              <select id="cook">
+                <option value="home" selected>自己做饭为主</option>
+                <option value="both">做饭 + 外食各半</option>
+                <option value="eatout">以外食为主</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>饮食清淡程度</label>
+              <select id="taste">
+                <option value="light" selected>清淡</option>
+                <option value="moderate">比较清淡</option>
+                <option value="oily">油腻</option>
+                <option value="veryoily">很油腻</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>早餐习惯</label>
+              <select id="breakfastHabit">
+                <option value="daily" selected>每天都吃</option>
+                <option value="sometimes">偶尔吃</option>
+                <option value="rarely">基本不吃</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>午餐主要场景</label>
+              <select id="lunchScene">
+                <option value="home" selected>自己做</option>
+                <option value="canteen">吃食堂</option>
+                <option value="takeout">外卖</option>
+                <option value="family">家人做</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>晚餐主要场景</label>
+              <select id="dinnerScene">
+                <option value="home" selected>自己做</option>
+                <option value="canteen">吃食堂</option>
+                <option value="takeout">外卖</option>
+                <option value="family">家人做</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>每周必要应酬（含聚餐）次数</label>
+              <input type="number" id="socialMeals" value="0" min="0" max="14">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>夜食问题</label>
+              <select id="nightEating">
+                <option value="none" selected>没有</option>
+                <option value="sometimes">偶尔有</option>
+                <option value="severe">有且严重</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>暴食问题</label>
+              <select id="binge">
+                <option value="none" selected>没有</option>
+                <option value="sometimes">偶尔有</option>
+                <option value="severe">有且严重</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>饮酒情况</label>
+            <select id="drinking">
+              <option value="none" selected>不饮酒</option>
+              <option value="sometimes">偶尔饮酒</option>
+              <option value="heavy">有且大量</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>当前饮食情况（选填：种类 / 大致量 / 零食等）</label>
+            <textarea id="currentDiet" placeholder="简单描述即可，用于配餐参考"></textarea>
+          </div>
+        </div>
+      </details>
+
+      <details class="form-section" open>
+        <summary><span>④ 运动与作息</span><span class="arrow">▾</span></summary>
+        <div class="body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>当前运动习惯</label>
+              <select id="exerciseHabit">
+                <option value="none" selected>基本不运动</option>
+                <option value="sometimes">偶尔运动</option>
+                <option value="1-2">每周 1～2 次</option>
+                <option value="3+">每周 3 次以上</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>力量训练情况</label>
+              <select id="strengthHabit">
+                <option value="none" selected>无</option>
+                <option value="sometimes">偶尔</option>
+                <option value="1-2">每周 1～2 次</option>
+                <option value="3+">每周 3 次以上</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>方便使用的运动器械（选填）</label>
+            <input type="text" id="equipment" placeholder="如 无 / 哑铃 / 跑步机 / 弹力带">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>每天固定运动时间（分钟）</label>
+              <input type="number" id="exerciseMinutes" value="0" min="0" max="300">
+            </div>
+            <div class="form-group">
+              <label>每天碎片活动时间（分钟）</label>
+              <input type="number" id="fragmentMinutes" value="30" min="0" max="600">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>睡眠时间（小时）</label>
+            <input type="number" id="sleepHours" value="7" min="3" max="14" step="0.5">
+          </div>
+        </div>
+      </details>
+
+      <details class="form-section" open>
+        <summary><span>⑤ 健康筛查（重要）</span><span class="arrow">▾</span></summary>
+        <div class="body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>是否有低血糖</label>
+              <select id="hypoglycemia">
+                <option value="no" selected>否</option>
+                <option value="yes">是</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>是否有糖代谢异常</label>
+              <select id="glucoseIssue">
+                <option value="no" selected>否</option>
+                <option value="yes">是</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>食物过敏（可多选）</label>
+            <div class="check-grid" id="allergyChecks"></div>
+          </div>
+          <div class="form-group">
+            <label>食物过敏具体清单（选填）</label>
+            <textarea id="allergyDetail" placeholder="如 对花生过敏，具体食物请写明"></textarea>
+          </div>
+          <div class="form-group">
+            <label>身体疾病（选填）</label>
+            <textarea id="disease" placeholder="如 高血压 / 糖尿病 / 甲状腺问题等，没有请留空"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>运动禁忌（选填）</label>
+              <textarea id="exerciseTaboo" placeholder="如 膝关节损伤，没有请留空"></textarea>
+            </div>
+            <div class="form-group">
+              <label>饮食禁忌（选填）</label>
+              <textarea id="dietTaboo" placeholder="如 不吃牛羊肉 / 素食，没有请留空"></textarea>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>其他异常健康指标（选填）</label>
+            <textarea id="otherHealth" placeholder="如 血脂偏高，没有请留空"></textarea>
+          </div>
+        </div>
+      </details>
+
+      <button id="calcBtn" class="btn-calc" onclick="runPipeline()">生成我的减脂方案</button>
+    </div>
+
+    <!-- ============ 右：结果 ============ -->
+    <div id="result-column">
+      <div id="placeholder-area">
+        <div class="card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:380px;text-align:center;">
+          <div style="font-size:46px;margin-bottom:14px;opacity:0.4;">🥗</div>
+          <div style="color:var(--text-secondary);font-size:14px;line-height:2;">
+            填写左侧信息后点击<br>
+            <strong style="color:var(--primary);">「生成我的减脂方案」</strong><br>
+            即可得到每日吃多少、三餐吃什么、<br>这几天买什么菜的轻量减脂指导
+          </div>
+        </div>
+      </div>
+      <div id="result-area" class="hidden"></div>
+    </div>
+  </div>
+</div>
+
+<button id="pdfBtn" class="btn-pdf hidden" onclick="downloadPdf()">⬇ 保存 PDF</button>
+<button id="calcFloatBtn" class="btn-float-calc" onclick="runPipeline()">生成我的减脂方案</button>
+<div id="pdfHolder"></div>
+
+<script>
+'use strict';
+/* =========================================================================
+ * 带电操作减脂食谱计算器
+ * 模块划分（自顶向下数据流）：
+ *   [0] CONFIG / 食物数据库（唯一配餐数据来源）
+ *   [1] 用户数据层  readProfile()
+ *   [2] 健康筛查层  healthScreen()
+ *   [3] 能量估算层  computeEnergy()（BMR / 活动系数 / TDEE / 目标热量）
+ *   [4] 宏量营养素  computeMacros()（蛋白质→脂肪→碳水，无负碳水）
+ *   [5] 餐次分配 + 食物组合 + 每日食谱  generateDayPlan()
+ *   [6] 采购汇总  buildPurchasePlan()
+ *   [7] 结果验证  runRealityCheck()
+ *   [8] 渲染层  render()
+ * ========================================================================= */
+
+/* ---------------- [0] 配置与食物数据库 ---------------- */
+const CFG = {
+  atwater: { p: 4, c: 4, f: 9 },
+  eggGrams: 50,            // 1 个鸡蛋约 50g（可食全蛋，单位约定）
+  milkMlPerG: 1,           // 牛奶按 100g ≈ 100ml 计（单位约定）
+  oilMlPerG: 1.1,          // 食用油约 1g ≈ 1.1ml（单位约定）
+  proteinPerKgLBM: { lose: 2.0, maintain: 1.6 },
+  fatPctOfTarget: 25,      // 脂肪参考量：约占目标热量的 25%
+  paceDeficits: { maintain: 0, mild: 300, standard: 500, fast: 700 },
+  minAge: 18,
+  weightBasisNote: '所有食材重量均为可食部分的生重：米/面为干重，肉类为生重，蔬菜为可食生重，牛奶按体积（ml）计。',
+  fatKcalPerG: 9,
+};
+
+// 食物数据库 —— 来源：《主要食物营养成分表（粗略）》，每 100g 可食部分。
+// 字段：cat 类别 / name 名称 / a 简写(展示用) / p 蛋白质g / f 脂肪g / c 碳水g / k 热量kcal / ca 钙mg / fe 铁mg
+// 数值为 "-" 的项以 null 表示（数据库未提供，不推测）。
+const FOOD_DB = [
+  // 谷类
+  { cat:'谷类', name:'大米', a:'大米', p:7.5, f:0.5, c:79, k:351, ca:10, fe:1.0 },
+  { cat:'谷类', name:'小米', a:'小米', p:9.7, f:1.7, c:77, k:362, ca:21, fe:4.7 },
+  { cat:'谷类', name:'高粱米', a:'高粱米', p:8.2, f:2.2, c:78, k:385, ca:17, fe:5.0 },
+  { cat:'谷类', name:'玉署黍', a:'玉米', p:8.5, f:4.3, c:73, k:365, ca:22, fe:1.6 },
+  { cat:'谷类', name:'大麦仁', a:'大麦仁', p:10.5, f:2.2, c:66, k:326, ca:43, fe:4.1 },
+  { cat:'谷类', name:'面粉', a:'面粉', p:12.0, f:0.8, c:70, k:339, ca:22, fe:7.6 },
+  // 干豆类
+  { cat:'干豆类', name:'黄豆（大豆）', a:'黄豆', p:39.2, f:17.4, c:25, k:413, ca:320, fe:5.9 },
+  { cat:'干豆类', name:'青豆', a:'青豆', p:37.3, f:18.3, c:30, k:434, ca:240, fe:5.4 },
+  { cat:'干豆类', name:'黑豆', a:'黑豆', p:49.8, f:12.1, c:19, k:384, ca:250, fe:10.5 },
+  { cat:'干豆类', name:'赤小豆', a:'赤小豆', p:20.7, f:0.5, c:58, k:318, ca:67, fe:5.2 },
+  { cat:'干豆类', name:'绿豆', a:'绿豆', p:22.1, f:0.8, c:59, k:332, ca:34, fe:9.7 },
+  { cat:'干豆类', name:'花豇豆', a:'花豇豆', p:22.6, f:2.1, c:58, k:341, ca:100, fe:7.9 },
+  { cat:'干豆类', name:'豌豆', a:'豌豆(干)', p:24.0, f:1.0, c:58, k:339, ca:57, fe:0.8 },
+  { cat:'干豆类', name:'蚕豆', a:'蚕豆', p:28.2, f:0.8, c:49, k:318, ca:71, fe:7.0 },
+  // 鲜豆类
+  { cat:'鲜豆类', name:'青扁豆荚（鹊豆）', a:'青扁豆荚', p:3.0, f:0.2, c:6, k:38, ca:132, fe:0.9 },
+  { cat:'鲜豆类', name:'白扁豆荚（刀子豆）', a:'白扁豆荚', p:3.2, f:0.3, c:5, k:36, ca:81, fe:3.4 },
+  { cat:'鲜豆类', name:'四季豆（芸豆）', a:'四季豆', p:1.9, f:0.8, c:4, k:31, ca:66, fe:1.6 },
+  { cat:'鲜豆类', name:'豌豆（准豆、小寒豆）', a:'豌豆(鲜)', p:7.2, f:0.3, c:12, k:80, ca:13, fe:0.8 },
+  { cat:'鲜豆类', name:'蚕豆（胡豆、佛豆）', a:'蚕豆(鲜)', p:9.0, f:0.7, c:11, k:86, ca:15, fe:1.7 },
+  { cat:'鲜豆类', name:'菜豆角', a:'菜豆角', p:2.4, f:0.2, c:4, k:27, ca:53, fe:1.0 },
+  // 豆类制品
+  { cat:'豆类制品', name:'黄豆芽', a:'黄豆芽', p:11.5, f:2.0, c:7, k:92, ca:68, fe:6.4 },
+  { cat:'豆类制品', name:'豆腐浆', a:'豆浆', p:1.6, f:0.7, c:1, k:17, ca:null, fe:null },
+  { cat:'豆类制品', name:'北豆腐', a:'北豆腐', p:9.2, f:1.2, c:6, k:72, ca:110, fe:3.6 },
+  { cat:'豆类制品', name:'豆腐乳', a:'豆腐乳', p:14.6, f:5.7, c:5, k:30, ca:167, fe:12.0 },
+  { cat:'豆类制品', name:'绿豆芽', a:'绿豆芽', p:3.2, f:0.1, c:4, k:30, ca:23, fe:0.9 },
+  { cat:'豆类制品', name:'豆腐渣', a:'豆腐渣', p:2.6, f:0.3, c:7, k:41, ca:16, fe:4.0 },
+  // 根茎类
+  { cat:'根茎类', name:'小葱（火葱、麦葱）', a:'小葱', p:1.4, f:0.3, c:5, k:28, ca:63, fe:1.0 },
+  { cat:'根茎类', name:'大葱（青葱）', a:'大葱', p:1.0, f:0.3, c:6, k:31, ca:12, fe:0.6 },
+  { cat:'根茎类', name:'葱头（大蒜）', a:'葱头', p:4.4, f:0.2, c:23, k:111, ca:5, fe:0.4 },
+  { cat:'根茎类', name:'芋头（土芝）', a:'芋头', p:2.2, f:0.1, c:16, k:74, ca:19, fe:0.6 },
+  { cat:'根茎类', name:'红萝卜', a:'红萝卜', p:2.0, f:0.4, c:5, k:32, ca:19, fe:1.9 },
+  { cat:'根茎类', name:'荸荠（乌芋）', a:'荸荠', p:1.5, f:0.1, c:21, k:91, ca:5, fe:0.5 },
+  { cat:'根茎类', name:'甘薯（红薯）', a:'红薯', p:2.3, f:0.2, c:29, k:127, ca:18, fe:0.4 },
+  { cat:'根茎类', name:'藕', a:'藕', p:1.0, f:0.1, c:6, k:29, ca:19, fe:0.5 },
+  { cat:'根茎类', name:'白萝卜', a:'白萝卜', p:0.6, f:0, c:6, k:26, ca:49, fe:0.5 },
+  { cat:'根茎类', name:'马铃薯（土豆、洋芋）', a:'土豆', p:1.9, f:0.7, c:28, k:126, ca:11, fe:0.9 },
+  // 叶菜类
+  { cat:'叶菜类', name:'黄花菜（鲜金针菜）', a:'鲜黄花菜', p:2.9, f:0.5, c:12, k:64, ca:73, fe:1.4 },
+  { cat:'叶菜类', name:'黄花（金针菜）', a:'干黄花菜', p:14.1, f:0.4, c:60, k:300, ca:463, fe:16.5 },
+  { cat:'叶菜类', name:'菠菜', a:'菠菜', p:2.0, f:0.2, c:2, k:18, ca:70, fe:2.5 },
+  { cat:'叶菜类', name:'韭菜', a:'韭菜', p:2.4, f:0.5, c:4, k:30, ca:56, fe:1.3 },
+  { cat:'叶菜类', name:'苋菜', a:'苋菜', p:2.5, f:0.4, c:5, k:34, ca:200, fe:4.8 },
+  { cat:'叶菜类', name:'油菜（胡菜）', a:'油菜', p:2.0, f:0.1, c:4, k:25, ca:140, fe:3.4 },
+  { cat:'叶菜类', name:'大白菜', a:'大白菜', p:1.4, f:0.3, c:3, k:19, ca:33, fe:0.4 },
+  { cat:'叶菜类', name:'小白菜', a:'小白菜', p:1.1, f:0.1, c:2, k:13, ca:86, fe:1.2 },
+  { cat:'叶菜类', name:'洋白菜（椰菜）', a:'卷心菜', p:1.3, f:0.3, c:4, k:24, ca:100, fe:1.9 },
+  { cat:'叶菜类', name:'香菜（芫荽）', a:'香菜', p:2.0, f:0.3, c:7, k:39, ca:170, fe:5.6 },
+  { cat:'叶菜类', name:'芹菜茎', a:'芹菜', p:2.2, f:0.3, c:2, k:20, ca:160, fe:8.5 },
+  // 菌类
+  { cat:'菌类', name:'蘑菇（鲜）', a:'鲜蘑菇', p:2.9, f:0.2, c:3, k:25, ca:8, fe:1.3 },
+  { cat:'菌类', name:'口蘑（干）', a:'干口蘑', p:35.6, f:1.4, c:23, k:247, ca:100, fe:32.0 },
+  { cat:'菌类', name:'香菌（香菇）', a:'香菇', p:13.0, f:1.8, c:54, k:384, ca:124, fe:25.3 },
+  // 海菜类
+  { cat:'海菜类', name:'木耳（黑）', a:'黑木耳', p:10.6, f:0.2, c:65, k:304, ca:357, fe:185.0 },
+  { cat:'海菜类', name:'海带（干，昆布）', a:'干海带', p:8.2, f:0.1, c:57, k:262, ca:2250, fe:150.0 },
+  { cat:'海菜类', name:'紫菜', a:'紫菜', p:24.5, f:0.9, c:31, k:230, ca:330, fe:32.0 },
+  // 茄瓜果类
+  { cat:'茄瓜果类', name:'南瓜', a:'南瓜', p:0.8, f:0, c:3, k:15, ca:27, fe:0.2 },
+  { cat:'茄瓜果类', name:'西葫芦', a:'西葫芦', p:0.6, f:0, c:2, k:10, ca:17, fe:0.2 },
+  { cat:'茄瓜果类', name:'瓠子（龙蛋瓜）', a:'瓠子', p:0.6, f:0.1, c:3, k:15, ca:12, fe:0.3 },
+  { cat:'茄瓜果类', name:'丝瓜（布瓜）', a:'丝瓜', p:1.5, f:0.1, c:5, k:27, ca:28, fe:0.8 },
+  { cat:'茄瓜果类', name:'茄子', a:'茄子', p:2.3, f:0.1, c:3, k:22, ca:22, fe:0.4 },
+  { cat:'茄瓜果类', name:'冬瓜', a:'冬瓜', p:0.4, f:0, c:2, k:10, ca:19, fe:0.3 },
+  { cat:'茄瓜果类', name:'西瓜', a:'西瓜', p:1.2, f:0, c:4, k:21, ca:6, fe:0.2 },
+  { cat:'茄瓜果类', name:'甜瓜', a:'甜瓜', p:0.3, f:0.1, c:4, k:18, ca:27, fe:0.4 },
+  { cat:'茄瓜果类', name:'菜瓜（地黄瓜）', a:'菜瓜', p:0.9, f:0, c:2, k:12, ca:24, fe:0.2 },
+  { cat:'茄瓜果类', name:'黄瓜', a:'黄瓜', p:0.8, f:0.2, c:2, k:13, ca:25, fe:0.4 },
+  { cat:'茄瓜果类', name:'西红柿（番茄）', a:'西红柿', p:0.6, f:0.3, c:2, k:13, ca:8, fe:0.4 },
+  // 水果类
+  { cat:'水果类', name:'柿', a:'柿子', p:0.7, f:0.1, c:11, k:48, ca:10, fe:0.2 },
+  { cat:'水果类', name:'枣', a:'鲜枣', p:1.2, f:0.2, c:24, k:103, ca:41, fe:0.5 },
+  { cat:'水果类', name:'苹果', a:'苹果', p:0.2, f:0.6, c:15, k:60, ca:11, fe:0.3 },
+  { cat:'水果类', name:'香蕉', a:'香蕉', p:1.2, f:0.6, c:20, k:90, ca:10, fe:0.8 },
+  { cat:'水果类', name:'梨', a:'梨', p:0.1, f:0.1, c:12, k:49, ca:5, fe:0.2 },
+  { cat:'水果类', name:'杏', a:'杏', p:0.9, f:0, c:10, k:44, ca:26, fe:0.8 },
+  { cat:'水果类', name:'李', a:'李子', p:0.5, f:0.2, c:9, k:40, ca:17, fe:0.5 },
+  { cat:'水果类', name:'桃', a:'桃', p:0.8, f:0.1, c:7, k:32, ca:8, fe:1.0 },
+  { cat:'水果类', name:'樱桃', a:'樱桃', p:1.2, f:0.3, c:8, k:40, ca:6, fe:5.9 },
+  { cat:'水果类', name:'葡萄', a:'葡萄', p:0.2, f:0, c:10, k:41, ca:4, fe:0.6 },
+  // 干果及硬果类
+  { cat:'干果硬果类', name:'花生仁（炒熟）', a:'花生仁', p:26.5, f:44.8, c:20, k:589, ca:71, fe:2.0 },
+  { cat:'干果硬果类', name:'栗子（生及熟）', a:'栗子', p:4.8, f:1.5, c:44, k:209, ca:15, fe:1.7 },
+  { cat:'干果硬果类', name:'杏仁（炒熟）', a:'杏仁', p:25.7, f:51, c:9, k:597, ca:141, fe:3.9 },
+  { cat:'干果硬果类', name:'菱角（生）', a:'菱角', p:3.6, f:0.5, c:24, k:115, ca:9, fe:0.7 },
+  { cat:'干果硬果类', name:'红枣（干）', a:'干红枣', p:3.3, f:0.5, c:73, k:309, ca:61, fe:1.6 },
+  // 走兽类
+  { cat:'走兽类', name:'牛肉', a:'牛肉', p:20.1, f:10.2, c:0, k:172, ca:7, fe:0.9 },
+  { cat:'走兽类', name:'牛肝', a:'牛肝', p:18.9, f:2.6, c:9, k:135, ca:13, fe:9 },
+  { cat:'走兽类', name:'羊肉', a:'羊肉', p:11.1, f:28.8, c:0.5, k:306, ca:11, fe:2 },
+  { cat:'走兽类', name:'羊肝', a:'羊肝', p:18.5, f:7.2, c:4, k:155, ca:9, fe:6.6 },
+  { cat:'走兽类', name:'猪肉', a:'猪肉', p:16.9, f:29.2, c:1.1, k:335, ca:11, fe:0.4 },
+  { cat:'走兽类', name:'猪肝', a:'猪肝', p:20.1, f:4.0, c:2.9, k:128, ca:11, fe:25 },
+  // 乳类
+  { cat:'乳类', name:'牛奶（鲜）', a:'牛奶', p:3.1, f:3.5, c:4.6, k:62, ca:120, fe:0.1 },
+  { cat:'乳类', name:'牛奶粉', a:'奶粉', p:25.6, f:26.7, c:35.6, k:48.5, ca:900, fe:0.8 },
+  { cat:'乳类', name:'羊奶（鲜）', a:'羊奶', p:3.8, f:4.1, c:4.6, k:71, ca:140, fe:0.7 },
+  // 飞禽
+  { cat:'飞禽', name:'鸡肉', a:'鸡肉', p:23.3, f:1.2, c:0, k:104, ca:11, fe:1.5 },
+  { cat:'飞禽', name:'鸭肉', a:'鸭肉', p:16.5, f:7.5, c:0.1, k:134, ca:11, fe:4.1 },
+  // 蛋类
+  { cat:'蛋类', name:'鸡蛋（全）', a:'鸡蛋', p:14.8, f:11.6, c:0, k:164, ca:55, fe:2.7 },
+  { cat:'蛋类', name:'鸭蛋（全）', a:'鸭蛋', p:13, f:14.7, c:0.5, k:186, ca:71, fe:3.2 },
+  { cat:'蛋类', name:'咸鸭蛋（全）', a:'咸鸭蛋', p:11.3, f:13.2, c:3.3, k:178, ca:102, fe:3.6 },
+  // 爬虫
+  { cat:'爬虫', name:'田鸡（青蛙）', a:'田鸡', p:11.9, f:0.3, c:0.2, k:51, ca:22, fe:1.3 },
+  { cat:'爬虫', name:'甲鱼', a:'甲鱼', p:16.5, f:1, c:1.5, k:81, ca:107, fe:1.4 },
+  // 蛤类
+  { cat:'蛤类', name:'河螃蟹', a:'河蟹', p:1.4, f:5.9, c:7.4, k:139, ca:129, fe:13.0 },
+  { cat:'蛤类', name:'明虾', a:'明虾', p:20.6, f:0.7, c:0.2, k:90, ca:35, fe:0.1 },
+  { cat:'蛤类', name:'青虾', a:'青虾', p:16.4, f:1.3, c:0.1, k:78, ca:99, fe:0.3 },
+  { cat:'蛤类', name:'虾米（河产及海产）', a:'虾米', p:46.8, f:2, c:0, k:205, ca:882, fe:null },
+  { cat:'蛤类', name:'田螺', a:'田螺', p:10.7, f:1.2, c:3.8, k:69, ca:357, fe:19.8 },
+  { cat:'蛤类', name:'蛤蜊', a:'蛤蜊', p:10.8, f:1.6, c:4.8, k:77, ca:37, fe:14.2 },
+  // 鱼类
+  { cat:'鱼类', name:'鲫鱼', a:'鲫鱼', p:13, f:1.1, c:0.1, k:62, ca:54, fe:2.5 },
+  { cat:'鱼类', name:'鲤鱼', a:'鲤鱼', p:18.1, f:1.6, c:0.2, k:88, ca:28, fe:1.3 },
+  { cat:'鱼类', name:'鳝鱼', a:'鳝鱼', p:17.9, f:0.5, c:0, k:76, ca:27, fe:4.6 },
+  { cat:'鱼类', name:'带鱼', a:'带鱼', p:15.9, f:3.4, c:1.5, k:100, ca:48, fe:2.3 },
+  { cat:'鱼类', name:'黄花鱼（石首鱼）', a:'黄花鱼', p:17.2, f:0.7, c:0.3, k:76, ca:31, fe:1.8 },
+  // 油脂及其它
+  { cat:'油脂及其它', name:'猪油（炼）', a:'猪油', p:0, f:99, c:0, k:891, ca:null, fe:null },
+  { cat:'油脂及其它', name:'芝麻油', a:'香油', p:0, f:100, c:0, k:900, ca:null, fe:null },
+  { cat:'油脂及其它', name:'花生油', a:'花生油', p:0, f:100, c:0, k:900, ca:null, fe:null },
+  { cat:'油脂及其它', name:'芝麻酱', a:'芝麻酱', p:20.0, f:52.9, c:15, k:616, ca:870, fe:58 },
+  { cat:'油脂及其它', name:'豆油', a:'豆油', p:0, f:100, c:0, k:900, ca:null, fe:null },
+];
+
+// 配餐角色（由本程序基于食物数据库指定，非数据库新增数据）
+const ROLES = {
+  staple:  ['大米','小米','面粉','玉署黍','甘薯（红薯）','马铃薯（土豆、洋芋）','大麦仁'],
+  protein: ['鸡肉','鸭肉','牛肉','鲫鱼','鲤鱼','鳝鱼','带鱼','黄花鱼（石首鱼）','明虾','青虾','鸡蛋（全）','北豆腐','田鸡（青蛙）','蛤蜊','田螺'],
+  dairy:   ['牛奶（鲜）','羊奶（鲜）'],
+  veg:     ['菠菜','油菜（胡菜）','大白菜','小白菜','洋白菜（椰菜）','西红柿（番茄）','黄瓜','西葫芦','茄子','韭菜','芹菜茎'],
+  fruit:   ['苹果','香蕉','梨','桃','西瓜'],
+  oil:     ['花生油','豆油','芝麻油'],
+};
+
+// 过敏原 → 数据库食物（直接映射，用于复选框）
+const ALLERGEN_MAP = {
+  egg:    { label:'鸡蛋', foods:['鸡蛋（全）','鸭蛋（全）','咸鸭蛋（全）'] },
+  milk:   { label:'牛奶/奶制品', foods:['牛奶（鲜）','羊奶（鲜）','牛奶粉'] },
+  soy:    { label:'大豆/豆制品', foods:['黄豆（大豆）','青豆','黑豆','赤小豆','绿豆','花豇豆','豌豆','蚕豆','黄豆芽','绿豆芽','北豆腐','豆腐浆','豆腐乳','豆腐渣','豆油'] },
+  wheat:  { label:'小麦/面筋', foods:['面粉'] },
+  seafood:{ label:'海鲜（鱼虾蟹贝）', foods:['鲫鱼','鲤鱼','鳝鱼','带鱼','黄花鱼（石首鱼）','明虾','青虾','虾米（河产及海产）','田螺','蛤蜊','河螃蟹'] },
+  beef:   { label:'牛肉', foods:['牛肉','牛肝'] },
+  pork:   { label:'猪肉', foods:['猪肉','猪肝'] },
+  lamb:   { label:'羊肉', foods:['羊肉','羊肝'] },
+  poultry:{ label:'鸡肉/禽肉', foods:['鸡肉','鸭肉'] },
+  nut:    { label:'坚果', foods:['花生仁（炒熟）','杏仁（炒熟）','栗子（生及熟）','菱角（生）'] },
+  peanut: { label:'花生', foods:['花生仁（炒熟）','花生油'] },
+  sesame: { label:'芝麻', foods:['芝麻油','芝麻酱'] },
+};
+
+// 自由文本关键词 → 数据库食物（用于"过敏清单/饮食禁忌"文本，长词优先，避免误伤）
+const TEXT_EXCLUDE_RULES = [
+  { keys:['花生'], foods:['花生仁（炒熟）','花生油'] },
+  { keys:['鸡蛋','鸭蛋','蛋'], foods:['鸡蛋（全）','鸭蛋（全）','咸鸭蛋（全）'] },
+  { keys:['牛奶','羊奶','奶粉','奶','乳'], foods:['牛奶（鲜）','羊奶（鲜）','牛奶粉'] },
+  { keys:['大豆','豆腐','豆浆','黄豆'], foods:['黄豆（大豆）','青豆','黑豆','赤小豆','绿豆','花豇豆','豌豆','蚕豆','黄豆芽','绿豆芽','北豆腐','豆腐浆','豆腐乳','豆腐渣','豆油'] },
+  { keys:['小麦','面粉','麸质','面筋'], foods:['面粉'] },
+  { keys:['海鲜','虾','蟹','贝','蛤','鱼'], foods:['鲫鱼','鲤鱼','鳝鱼','带鱼','黄花鱼（石首鱼）','明虾','青虾','虾米（河产及海产）','田螺','蛤蜊','河螃蟹'] },
+  { keys:['牛肉','牛'], foods:['牛肉','牛肝'] },
+  { keys:['猪肉','猪'], foods:['猪肉','猪肝'] },
+  { keys:['羊肉','羊'], foods:['羊肉','羊肝'] },
+  { keys:['鸡肉','鸡'], foods:['鸡肉'] },
+  { keys:['坚果','杏仁','栗子','菱角'], foods:['花生仁（炒熟）','杏仁（炒熟）','栗子（生及熟）','菱角（生）'] },
+  { keys:['芝麻'], foods:['芝麻油','芝麻酱'] },
+];
+
+/* ---------------- 工具函数 ---------------- */
+const byName = (name) => FOOD_DB.find(x => x.name === name);
+const round1 = (n) => Math.round(n * 10) / 10;
+const round2 = (n) => Math.round(n * 100) / 100;
+const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+const snap5 = (n) => Math.round(n / 5) * 5;   // 四舍五入到 5g（便于采购）
+const snap2 = (n) => Math.round(n / 2) * 2;   // 四舍五入到 2g（油脂）
+const isEggFood = (f) => f.name === '鸡蛋（全）';
+
+// 营养成分贡献（克数 → 宏量）
+function contrib(food, grams) {
+  return {
+    p: food.p * grams / 100,
+    f: food.f * grams / 100,
+    c: food.c * grams / 100,
+    kcal: food.k * grams / 100,
+  };
+}
+function addMacros(a, b) { return { p: a.p + b.p, f: a.f + b.f, c: a.c + b.c, kcal: a.kcal + b.kcal }; }
+function subMacros(a, b) { return { p: a.p - b.p, f: a.f - b.f, c: a.c - b.c, kcal: a.kcal - b.kcal }; }
+function scaleMacros(a, r) { return { p: a.p * r, f: a.f * r, c: a.c * r, kcal: a.kcal * r }; }
+function roundMacros(a) { return { p: Math.round(a.p), f: Math.round(a.f), c: Math.round(a.c), kcal: Math.round(a.kcal) }; }
+
+/* ---------------- [1] 用户数据层 ---------------- */
+function readProfile() {
+  const g = (id) => document.getElementById(id).value;
+  const num = (id, dflt) => { const v = parseFloat(g(id)); return isFinite(v) ? v : dflt; };
+  const allergyChecks = [];
+  document.querySelectorAll('#allergyChecks input:checked').forEach(cb => allergyChecks.push(cb.value));
+  return {
+    sex: currentGender,
+    age: num('age', 25),
+    height: num('height', 165),
+    weight: num('weight', 60),
+    pace: g('pace') || 'standard',
+    mealCount: parseInt(g('mealCount'), 10) === 5 ? 5 : 3,
+    workType: g('workType') || 'sedentary',
+    dailyActivity: g('dailyActivity') || 'low',
+    cook: g('cook') || 'home',
+    taste: g('taste') || 'light',
+    breakfastHabit: g('breakfastHabit') || 'daily',
+    lunchScene: g('lunchScene') || 'home',
+    dinnerScene: g('dinnerScene') || 'home',
+    socialMeals: num('socialMeals', 0),
+    nightEating: g('nightEating') || 'none',
+    binge: g('binge') || 'none',
+    drinking: g('drinking') || 'none',
+    currentDiet: g('currentDiet').trim(),
+    exerciseHabit: g('exerciseHabit') || 'none',
+    strengthHabit: g('strengthHabit') || 'none',
+    equipment: g('equipment').trim(),
+    exerciseMinutes: num('exerciseMinutes', 0),
+    fragmentMinutes: num('fragmentMinutes', 30),
+    sleepHours: num('sleepHours', 7),
+    hypoglycemia: g('hypoglycemia') || 'no',
+    glucoseIssue: g('glucoseIssue') || 'no',
+    allergies: allergyChecks,
+    allergyDetail: g('allergyDetail').trim(),
+    disease: g('disease').trim(),
+    exerciseTaboo: g('exerciseTaboo').trim(),
+    dietTaboo: g('dietTaboo').trim(),
+    otherHealth: g('otherHealth').trim(),
+  };
+}
+
+/* ---------------- [2] 健康筛查层 ---------------- */
+function collectExcludedFoods(p) {
+  const exclude = new Set();
+  p.allergies.forEach(key => {
+    const rule = ALLERGEN_MAP[key];
+    if (rule) rule.foods.forEach(f => exclude.add(f));
+  });
+  // 自由文本
+  const texts = [p.allergyDetail, p.dietTaboo];
+  texts.forEach(t => {
+    if (!t) return;
+    TEXT_EXCLUDE_RULES.forEach(rule => {
+      if (rule.keys.some(k => t.includes(k))) rule.foods.forEach(f => exclude.add(f));
+    });
+  });
+  return exclude;
+}
+
+function healthScreen(p) {
+  const blocked = [];
+  const warnings = [];
+  const exclude = collectExcludedFoods(p);
+
+  if (p.glucoseIssue === 'yes') blocked.push('糖代谢异常');
+  if (p.hypoglycemia === 'yes') blocked.push('低血糖');
+  if (p.disease) blocked.push('身体疾病');
+  if (p.exerciseTaboo) warnings.push('你有运动禁忌（本工具不涉及运动建议，请遵医嘱运动）');
+  if (p.otherHealth) warnings.push('你填写了其他异常健康指标，请自行确认当前方案是否适合，必要时咨询专业人士');
+  if (p.allergies.length || p.allergyDetail) warnings.push('已记录食物过敏信息，配餐已尽量避开相关食材，请食用前再次核对');
+  if (p.dietTaboo) warnings.push('已记录饮食禁忌，配餐已尽量避开相关食材');
+  if (p.age < CFG.minAge) blocked.push('年龄未满 18 岁（本工具仅面向成年人）');
+  if (p.binge === 'severe') warnings.push('你有较严重的暴食问题，单纯饮食计划可能不够，建议寻求专业支持');
+  if (p.drinking === 'heavy') warnings.push('饮酒量大，酒精本身含热量，减脂期建议严格控制');
+
+  const level = blocked.length ? 'block' : (warnings.length ? 'restrict' : 'ok');
+  return { level, blocked, warnings, exclude };
+}
+
+/* ---------------- [3] 能量估算层 ---------------- */
+function mifflin(p) {
+  if (p.sex === 'male') return 10 * p.weight + 6.25 * p.height - 5 * p.age + 5;
+  return 10 * p.weight + 6.25 * p.height - 5 * p.age - 161;
+}
+
+// 活动系数：综合工作性质、日常活动量、运动习惯、力量训练、可用时间（在 1.2~1.9 区间估算）
+function activityFactor(p) {
+  const workMap = { heavy: 0.30, medium: 0.15, light: 0.05, sedentary: 0.0 };
+  const actMap = { high: 0.15, medium: 0.08, low: 0.03, minimal: 0.0 };
+  const strengthMap = { '3+': 0.15, '1-2': 0.08, sometimes: 0.04, none: 0.0 };
+  let af = 1.2 + (workMap[p.workType] || 0) + (actMap[p.dailyActivity] || 0);
+  const ex = p.exerciseMinutes || 0;
+  af += ex < 15 ? 0 : ex < 45 ? 0.06 : ex < 90 ? 0.12 : 0.18;
+  af += strengthMap[p.strengthHabit] || 0;
+  const frag = p.fragmentMinutes || 0;
+  af += frag < 30 ? 0 : frag < 90 ? 0.03 : 0.06;
+  return round2(clamp(af, 1.2, 1.9));
+}
+
+function computeEnergy(p) {
+  const bmr = Math.round(mifflin(p));
+  const af = activityFactor(p);
+  const tdee = Math.round(bmr * af);
+  const deficit = CFG.paceDeficits[p.pace] ?? 500;
+  const target = tdee - deficit;
+  return { bmr, af, tdee, deficit, target };
+}
+
+// 体脂率：优先用输入值，否则用 Deurenberg（BMI+年龄）估算
+function estimateBfp(p) {
+  const bmi = p.weight / Math.pow(p.height / 100, 2);
+  const b = p.sex === 'male' ? 1.20 * bmi + 0.23 * p.age - 16.2 : 1.20 * bmi + 0.23 * p.age - 5.4;
+  return clamp(Math.round(b), 5, 60);
+}
+
+/* ---------------- [4] 宏量营养素层 ---------------- */
+function computeMacros(p, energy) {
+  const bfp = estimateBfp(p);
+  const lbm = p.weight * (1 - bfp / 100);
+  const coef = p.pace === 'maintain' ? CFG.proteinPerKgLBM.maintain : CFG.proteinPerKgLBM.lose;
+  const protein = Math.round(lbm * coef);
+  const fat = Math.round(energy.target * CFG.fatPctOfTarget / 100 / CFG.fatKcalPerG);
+  const proteinKcal = protein * CFG.atwater.p;
+  const fatKcal = fat * CFG.atwater.f;
+  let carbKcal = energy.target - proteinKcal - fatKcal;
+  if (carbKcal < 0) {
+    // 情况1：营养素最低约束超过目标热量
+    return { error: 'conflict', protein, fat, proteinKcal, fatKcal, bfp, lbm, coef, target: energy.target };
+  }
+  const carb = Math.max(0, Math.round(carbKcal / CFG.atwater.c));
+  const carbKcalFinal = carb * CFG.atwater.c;
+  const totalKcal = proteinKcal + fatKcal + carbKcalFinal;
+  return { protein, fat, carb, proteinKcal, fatKcal, carbKcal: carbKcalFinal, totalKcal, bfp, lbm, coef, error: null };
+}
+
+/* ---------------- [5] 配餐层 ---------------- */
+function pickFood(roleList, exclude, fallbackIndex) {
+  const avail = roleList.filter(n => !exclude.has(n));
+  return avail.length ? avail[fallbackIndex % avail.length] : null;
+}
+
+function selectFoods(p, exclude) {
+  const protein = pickFood(ROLES.protein, exclude, 0);
+  const staple = pickFood(ROLES.staple, exclude, 0);
+  const veg = pickFood(ROLES.veg, exclude, 0);
+  const veg2 = pickFood(ROLES.veg, exclude, 1);
+  const oil = pickFood(ROLES.oil, exclude, 0);
+  const dairy = pickFood(ROLES.dairy, exclude, 0);
+  const fruit = pickFood(ROLES.fruit, exclude, 0);
+  return { protein, staple, veg, veg2, oil, dairy, fruit };
+}
+
+// 早餐：鸡蛋 + 奶 + 主食（+ 可选水果）
+function buildBreakfast(p, m, sel, carbShare, exclude) {
+  const items = [];
+  let macros = { p: 0, f: 0, c: 0, kcal: 0 };
+
+  // 鸡蛋：过敏/禁忌被排除时，改用所选同类蛋白食材补足约 15g 蛋白质
+  if (!exclude.has('鸡蛋（全）')) {
+    const egg = byName('鸡蛋（全）');
+    const eggQty = 2;
+    const eggG = eggQty * CFG.eggGrams;
+    items.push({ food: egg, grams: eggG, unit: '个', qty: eggQty, how: '水煮' });
+    macros = addMacros(macros, contrib(egg, eggG));
+  } else if (sel.protein) {
+    const pf = byName(sel.protein);
+    const gp = clamp(snap5(15 * 100 / pf.p), 40, 250);
+    items.push({ food: pf, grams: gp, unit: 'g', qty: gp, how: proteinHow(pf) });
+    macros = addMacros(macros, contrib(pf, gp));
+  }
+
+  // 牛奶/奶：被排除时跳过
+  if (sel.dairy) {
+    const milk = byName(sel.dairy);
+    const milkG = 250;
+    items.push({ food: milk, grams: milkG, unit: 'ml', qty: milkG, how: '直接饮用' });
+    macros = addMacros(macros, contrib(milk, milkG));
+  }
+
+  const bfCarb = m.c * carbShare;
+  let remCarb = bfCarb - macros.c;
+  if (remCarb > 0 && sel.staple) {
+    const sf = byName(sel.staple);
+    let gs = snap5(remCarb * 100 / sf.c);
+    gs = clamp(gs, 30, 300);
+    items.push({ food: sf, grams: gs, unit: 'g', qty: gs, how: stapleHow(sf) });
+    macros = addMacros(macros, contrib(sf, gs));
+  }
+
+  return { name: '早餐', items, macros: roundMacros(macros) };
+}
+
+// 加餐：水果（简单、可执行）
+function buildSnack(sel, name) {
+  const items = [];
+  let macros = { p: 0, f: 0, c: 0, kcal: 0 };
+  const fruit = byName(sel.fruit);
+  const gF = 150;
+  items.push({ food: fruit, grams: gF, unit: 'g', qty: gF, how: '洗净生食' });
+  macros = addMacros(macros, contrib(fruit, gF));
+  return { name, items, macros: roundMacros(macros) };
+}
+
+// 正餐：肉/蛋白 + 主食 + 蔬菜 + 油
+function buildMainMeal(T, sel, name) {
+  const items = [];
+  let used = { p: 0, f: 0, c: 0, kcal: 0 };
+  let rem = { ...T };
+
+  // 蔬菜先定（固定量，增加饱腹感）
+  if (sel.veg) {
+    const vf = byName(sel.veg);
+    const gv = 200;
+    const c3 = contrib(vf, gv);
+    items.push({ food: vf, grams: gv, unit: 'g', qty: gv, how: '清炒或水煮' });
+    used = addMacros(used, c3);
+    rem = subMacros(rem, c3);
+  }
+
+  // 蛋白 + 主食 联合求解（主食也含蛋白质，须一并计入，避免蛋白超标）
+  const pf = byName(sel.protein);
+  const sf = byName(sel.staple);
+  const P = rem.p, C = rem.c;
+  const pp = pf.p, pc = pf.c, sp = sf.p, sc = sf.c;
+  const det = pp * sc - pc * sp;
+  let gp, gs;
+  if (Math.abs(det) > 1e-9) {
+    gp = (100 * P * sc - 100 * C * sp) / det;
+    gs = (100 * C * pp - 100 * P * pc) / det;
+  } else {
+    gp = 100 * P / pp;
+    gs = 100 * C / sc;
+  }
+  // 蛋白取整（鸡蛋按整数个）
+  if (isEggFood(pf)) {
+    const n = clamp(Math.round(gp / CFG.eggGrams), 1, 3);
+    gp = n * CFG.eggGrams;
+  } else {
+    gp = clamp(snap5(Math.round(gp)), 30, 350);
+  }
+  // 主食取整（碳水目标过低时不强制主食）
+  if (C <= 5) gs = 0;
+  else gs = clamp(snap5(Math.round(gs)), 30, 320);
+
+  if (gp > 0) {
+    const c1 = contrib(pf, gp);
+    items.push({ food: pf, grams: gp, unit: isEggFood(pf) ? '个' : 'g', qty: isEggFood(pf) ? gp / CFG.eggGrams : gp, how: proteinHow(pf) });
+    used = addMacros(used, c1);
+    rem = subMacros(rem, c1);
+  }
+  if (gs > 0) {
+    const c2 = contrib(sf, gs);
+    items.push({ food: sf, grams: gs, unit: 'g', qty: gs, how: stapleHow(sf) });
+    used = addMacros(used, c2);
+    rem = subMacros(rem, c2);
+  }
+
+  // 油（补足脂肪）
+  const of = byName(sel.oil);
+  let go = Math.round(rem.f);
+  go = clamp(go, 0, 20);
+  if (go > 0) {
+    const c4 = contrib(of, go);
+    items.push({ food: of, grams: go, unit: 'g', qty: go, how: '炒菜用油' });
+    used = addMacros(used, c4);
+  }
+
+  return { name, items, macros: roundMacros(used) };
+}
+
+function stapleHow(f) {
+  const n = f.name;
+  if (n === '大米') return '淘洗后煮饭';
+  if (n === '小米') return '煮粥或蒸饭';
+  if (n === '面粉') return '做面条/馒头';
+  if (n === '玉署黍') return '蒸/煮';
+  if (n === '甘薯（红薯）') return '蒸熟';
+  if (n === '马铃薯（土豆、洋芋）') return '蒸/煮/少油炒';
+  return '蒸/煮';
+}
+function proteinHow(f) {
+  const n = f.name;
+  if (n.includes('鱼') || n.includes('虾') || n.includes('蛤') || n.includes('螺') || n.includes('蟹') || n.includes('蛙')) return '清蒸或水煮';
+  if (n.includes('豆腐')) return '少油煎或炖';
+  if (n.includes('鸡') || n.includes('鸭')) return '煎/水煮/清蒸';
+  if (n.includes('牛')) return '少油煎或卤';
+  if (n === '鸡蛋（全）') return '水煮';
+  return '煎/水煮';
+}
+
+function isEatOutScene(scene) { return scene === 'canteen' || scene === 'takeout'; }
+
+// 最小可执行配餐热量：以本工具的最小分量（早餐 1 蛋 + 200ml 奶 + 30g 主食；正餐 30g 蛋白 + 30g 主食 + 200g 蔬菜）估算，
+// 用于判断目标热量是否低到无法生成可执行的一日三餐。这是"可执行性"下限，不是生理安全底线。
+function minFeasibleKcal() {
+  const egg = byName('鸡蛋（全）'), milk = byName('牛奶（鲜）'), rice = byName('大米'), chicken = byName('鸡肉'), veg = byName('菠菜');
+  const bf = contrib(egg, 50).kcal + contrib(milk, 200).kcal + contrib(rice, 30).kcal;
+  const main = contrib(chicken, 30).kcal + contrib(rice, 30).kcal + contrib(veg, 200).kcal;
+  return Math.round(bf + main * 2);
+}
+
+function generateDayPlan(p, targets) {
+  const exclude = collectExcludedFoods(p);
+  const sel = selectFoods(p, exclude);
+  if (!sel.protein || !sel.staple || !sel.oil) {
+    return { error: 'db_insufficient', sel };
+  }
+  const m = targets;
+  const meals = [];
+
+  // 早餐
+  const carbShare = p.breakfastHabit === 'rarely' ? 0.08 : 0.22;
+  const bf = buildBreakfast(p, m, sel, carbShare, exclude);
+  meals.push(bf);
+  let rem = subMacros(m, bf.macros);
+
+  let snack1 = null, snack2 = null;
+  if (p.mealCount === 5) {
+    snack1 = buildSnack(sel, '上午加餐');
+    rem = subMacros(rem, snack1.macros);
+    snack2 = buildSnack(sel, '下午加餐');
+    rem = subMacros(rem, snack2.macros);
+  }
+
+  // 午餐 + 晚餐 分摊剩余
+  const dinnerEatOut = isEatOutScene(p.dinnerScene);
+  const lunchShare = dinnerEatOut ? 0.60 : 0.52;
+  const lunchT = scaleMacros(rem, lunchShare);
+  const lunch = buildMainMeal(lunchT, sel, '午餐');
+  const dinnerT = subMacros(rem, lunch.macros);
+  const dinner = buildMainMeal(dinnerT, sel, '晚餐');
+
+  if (p.mealCount === 5) meals.push(snack1);
+  meals.push(lunch);
+  if (p.mealCount === 5) meals.push(snack2);
+  meals.push(dinner);
+
+  const totals = meals.reduce((acc, me) => addMacros(acc, me.macros), { p: 0, f: 0, c: 0, kcal: 0 });
+  return { error: null, meals, totals: roundMacros(totals), sel, remAfterDinner: dinnerT };
+}
+
+/* ---------------- [6] 采购汇总层 ---------------- */
+function buildPurchasePlan(dayPlan) {
+  // 汇总每日各食材克数
+  const usage = new Map(); // name -> {grams, unit, qty}
+  dayPlan.meals.forEach(me => {
+    me.items.forEach(it => {
+      const key = it.food.name;
+      if (!usage.has(key)) usage.set(key, { food: it.food, grams: 0, qty: 0, unit: it.unit });
+      const u = usage.get(key);
+      u.grams += it.grams;
+      u.qty += (it.qty || 0);
+    });
+  });
+  const rows = [];
+  usage.forEach(u => {
+    const food = u.food;
+    const weekG = u.grams * 7;
+    const cat = food.cat;
+    let buy = '', note = '';
+    if (isEggFood(food)) {
+      const weekEggs = Math.round(weekG / CFG.eggGrams);
+      buy = weekEggs + ' 个';
+      note = '按整数购买，约 ' + weekG + ' g';
+    } else if (u.unit === 'ml') {
+      const weekMl = Math.round(weekG * CFG.milkMlPerG);
+      const liters = Math.ceil(weekMl / 250) * 0.25;
+      buy = '约 ' + liters.toFixed(2).replace(/\.?0+$/, '') + ' L';
+      note = '按常见包装向上取整（' + weekMl + ' ml）';
+    } else if (cat === '油脂及其它') {
+      const weekMl = Math.round(weekG * CFG.oilMlPerG);
+      buy = '约 ' + Math.round(weekG) + ' g（约 ' + weekMl + ' ml）';
+      note = '一瓶常用小瓶装约 500 ml';
+    } else if (cat === '谷类' || cat === '干豆类') {
+      buy = '约 ' + ceilPack(weekG) + ' kg';
+      note = '干重，按常见包装向上取整';
+    } else if (cat === '走兽类' || cat === '飞禽' || cat === '鱼类' || cat === '蛤类' || cat === '爬虫' || cat === '蛋类') {
+      buy = '约 ' + ceilMeat(weekG) + ' g';
+      note = '生重，按常见包装向上取整';
+    } else if (cat.includes('菜') || cat === '菌类' || cat === '根茎类' || cat === '茄瓜果类' || cat === '鲜豆类' || cat === '豆类制品' || cat === '海菜类') {
+      buy = '约 ' + Math.ceil(weekG / 250) * 250 + ' g';
+      note = weekG > 1500 ? '易腐，建议分 2~3 次采购' : '注意保存周期';
+    } else if (cat === '水果类') {
+      buy = '约 ' + ceilPack(weekG) + ' kg';
+      note = '按个/份购买';
+    } else {
+      buy = '约 ' + Math.round(weekG) + ' g';
+      note = '按常见包装';
+    }
+    rows.push({ name: food.a, grams: Math.round(weekG), buy, note, cat });
+  });
+  // 优化排序：先主食/蛋白，后蔬菜水果
+  const order = { '谷类': 1, '干豆类': 1, '豆类制品': 2, '走兽类': 3, '飞禽': 3, '鱼类': 3, '蛤类': 3, '爬虫': 3, '蛋类': 3, '乳类': 4, '油脂及其它': 5, '根茎类': 6, '鲜豆类': 6, '叶菜类': 6, '茄瓜果类': 6, '菌类': 6, '海菜类': 6, '水果类': 7 };
+  rows.sort((a, b) => (order[a.cat] || 9) - (order[b.cat] || 9));
+  return rows;
+}
+function ceilPack(g) { const kg = g / 1000; const steps = [0.25, 0.5, 1, 1.5, 2, 3, 5]; for (const s of steps) if (kg <= s) return s; return Math.ceil(kg); }
+function ceilMeat(g) { const steps = [250, 500, 750, 1000, 1500, 2000, 3000, 5000]; for (const s of steps) if (g <= s) return s; return Math.ceil(g / 500) * 500; }
+
+/* ---------------- [7] 结果验证层 ---------------- */
+function runRealityCheck(p, targets, dayPlan) {
+  const checks = [];
+  // 检查一：营养达标
+  const kcalErr = Math.abs(dayPlan.totals.kcal - targets.kcal);
+  const kcalPct = targets.kcal > 0 ? kcalErr / targets.kcal * 100 : 0;
+  const errOf = (actual, tgt) => Math.abs(actual - tgt);
+  const pErr = targets.p > 0 ? errOf(dayPlan.totals.p, targets.p) / targets.p * 100 : 0;
+  const fErr = targets.f > 0 ? errOf(dayPlan.totals.f, targets.f) / targets.f * 100 : 0;
+  const cErr = targets.c > 0 ? errOf(dayPlan.totals.c, targets.c) / targets.c * 100 : 0;
+  if (kcalPct <= 8 && pErr <= 15 && fErr <= 15 && cErr <= 15) {
+    checks.push({ pass: true, text: '营养达标：全天热量与目标误差约 ' + Math.round(kcalPct) + '%，蛋白质/脂肪/碳水误差均在可接受范围内。' });
+  } else {
+    checks.push({ pass: false, text: '营养偏差偏大（热量误差 ' + Math.round(kcalPct) + '%）。已尽量贴近目标，可调整目标节奏或食材再试。' });
+  }
+
+  // 检查二：食材种类
+  const names = new Set();
+  dayPlan.meals.forEach(me => me.items.forEach(it => names.add(it.food.name)));
+  if (names.size <= 12) checks.push({ pass: true, text: '全天食材约 ' + names.size + ' 种，种类适中，便于采购与复用。' });
+  else checks.push({ pass: false, text: '全天食材 ' + names.size + ' 种，偏多，建议减少花样、提高复用。' });
+
+  // 检查三：无法单独采购的小份量
+  const tiny = [];
+  dayPlan.meals.forEach(me => me.items.forEach(it => {
+    if (it.unit === 'g' && it.grams > 0 && it.grams < 30 && it.food.cat !== '油脂及其它') tiny.push(it.food.a + ' ' + it.grams + 'g');
+  }));
+  if (!tiny.length) checks.push({ pass: true, text: '无 30g 以下的琐碎分量食材。' });
+  else checks.push({ pass: false, text: '存在过小份量：' + tiny.join('、') + '，现实中难以单独采购，已尽量合并。' });
+
+  // 检查四：易腐食材使用周期（只统计鲜蔬菌菇等不易长期存放的食材）
+  const freshProduce = dayPlan.meals.reduce((s, me) => s + me.items.filter(it => ['叶菜类','茄瓜果类','菌类','鲜豆类'].includes(it.food.cat)).reduce((a, it) => a + it.grams, 0), 0);
+  if (freshProduce * 7 <= 2000) checks.push({ pass: true, text: '鲜蔬菌菇 7 天约 ' + Math.round(freshProduce * 7 / 1000 * 10) / 10 + ' kg，采购与存放压力不大。' });
+  else checks.push({ pass: false, text: '鲜蔬菌菇量较大（7 天约 ' + Math.round(freshProduce * 7 / 1000 * 10) / 10 + ' kg），建议分 2~3 次采购，肉类可冷冻存放。' });
+
+  // 检查五：是否吃得下
+  const eggsPerDay = dayPlan.meals.reduce((s, me) => s + me.items.filter(it => isEggFood(it.food)).reduce((a, it) => a + (it.qty || 0), 0), 0);
+  const maxMealW = Math.max(...dayPlan.meals.map(me => me.items.reduce((a, it) => a + (it.grams || 0), 0)));
+  if (eggsPerDay <= 4 && maxMealW <= 1000) checks.push({ pass: true, text: '单餐量与鸡蛋数量在合理范围内（每天 ' + eggsPerDay + ' 个鸡蛋）。' });
+  else checks.push({ pass: false, text: '执行性存疑：每天 ' + eggsPerDay + ' 个鸡蛋或单餐总量 ' + maxMealW + 'g，明显不合理，请调整。' });
+
+  return checks;
+}
+
+/* ---------------- [8] 渲染层 ---------------- */
+let currentGender = 'female';
+
+function setGender(g) {
+  currentGender = g;
+  document.querySelectorAll('.gender-btn').forEach(b => {
+    b.className = 'gender-btn';
+    if (b.dataset.gender === g) b.classList.add(g === 'male' ? 'active-male' : 'active-female');
+  });
+}
+
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+
+function runPipeline() {
+  const p = readProfile();
+  setPdfBtn(false);
+  lastResult = null;
+
+  // 基本输入校验
+  if (!(p.weight > 20 && p.height > 100 && p.age > 0)) {
+    renderError('请先填写有效的身高、体重、年龄。');
+    return;
+  }
+
+  const screen = healthScreen(p);
+  const energy = computeEnergy(p);
+  const macros = computeMacros(p, energy);
+
+  const resultArea = document.getElementById('result-area');
+  const placeholder = document.getElementById('placeholder-area');
+  resultArea.innerHTML = '';
+  resultArea.classList.remove('hidden');
+  placeholder.style.display = 'none';
+
+  const wrap = el('div');
+
+  // —— 健康阻断 ——
+  if (screen.level === 'block') {
+    const b = el('div', 'banner risk');
+    b.innerHTML = '<b>⚠️ 暂不生成普通减脂方案。</b>检测到：' + esc(screen.blocked.join('、')) +
+      '。这类情况不能套用面向普通健康人群的通用计算公式，建议先咨询专业医疗或营养支持，待明确后再做计划。';
+    wrap.appendChild(b);
+    resultArea.appendChild(wrap);
+    return;
+  }
+
+  // —— 风险提示（非阻断） ——
+  screen.warnings.forEach(w => {
+    const b = el('div', 'banner warn');
+    b.innerHTML = '⚠️ ' + esc(w);
+    wrap.appendChild(b);
+  });
+
+  // —— 宏量营养素冲突 ——
+  if (macros.error === 'conflict') {
+    const b = el('div', 'banner risk');
+    b.innerHTML = '<b>当前目标热量无法同时满足设定的蛋白质与脂肪要求。</b>' +
+      '估算下蛋白质约 ' + macros.protein + ' g、脂肪约 ' + macros.fat + ' g，已超过目标摄入 ' + energy.target + ' kcal。<br>' +
+      '建议：选择更温和的减脂节奏、增加日常活动量，或寻求专业指导。';
+    wrap.appendChild(b);
+    wrap.appendChild(buildEnergyInfo(energy, macros, p));
+    resultArea.appendChild(wrap);
+    return;
+  }
+
+  // —— 目标热量过低（无法生成可执行配餐） ——
+  const minKcal = minFeasibleKcal();
+  if (energy.target < minKcal) {
+    const b = el('div', 'banner risk');
+    b.innerHTML = '<b>目标热量过低，无法生成可执行的一日三餐。</b>目标摄入 ' + energy.target + ' kcal，低于本工具能生成的最小可执行配餐（约 ' + minKcal + ' kcal）。' +
+      '建议选择更温和的减脂节奏，或增加日常活动量以提高消耗，而不是继续压低热量。';
+    wrap.appendChild(b);
+    wrap.appendChild(buildEnergyInfo(energy, macros, p));
+    resultArea.appendChild(wrap);
+    return;
+  }
+
+  // —— 目标异常提示 ——
+  if (energy.target < energy.bmr) {
+    const b = el('div', 'banner warn');
+    b.innerHTML = '⚠️ 你的目标摄入（' + energy.target + ' kcal）低于基础代谢估算值（' + energy.bmr + ' kcal），缺口较大，可能较难长期坚持。建议优先增加日常活动量或选择更温和的节奏。';
+    wrap.appendChild(b);
+  }
+
+  const targets = { p: macros.protein, f: macros.fat, c: macros.carb, kcal: macros.totalKcal };
+
+  // —— 生成食谱 ——
+  const dayPlan = generateDayPlan(p, targets);
+  if (dayPlan.error === 'db_insufficient') {
+    const b = el('div', 'banner risk');
+    b.innerHTML = '<b>食物数据库覆盖不足。</b>当前食物数据库在你所填的过敏/禁忌限制下，找不到足够的主食或蛋白食材完成配餐。为避免虚构营养数据，暂不生成食谱。请调整饮食禁忌，或补充更多可用食材信息。';
+    wrap.appendChild(b);
+    wrap.appendChild(buildEnergyInfo(energy, macros, p));
+    resultArea.appendChild(wrap);
+    return;
+  }
+
+  const checks = runRealityCheck(p, targets, dayPlan);
+  lastResult = { p, screen, energy, macros, targets, dayPlan, checks };
+
+  // —— 第一层：每日目标 ——
+  wrap.appendChild(buildDailyTarget(energy, macros));
+  // —— 第二层：怎么吃 ——
+  wrap.appendChild(buildMeals(p, dayPlan, targets, checks));
+  // —— 第三层：怎么采购 ——
+  wrap.appendChild(buildPurchase(p, dayPlan));
+  // —— 第四层：为什么这么安排 ——
+  wrap.appendChild(buildExplanation(p, energy, macros, dayPlan));
+
+  resultArea.appendChild(wrap);
+  setPdfBtn(true);
+  resultArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function buildEnergyInfo(energy, macros, p) {
+  const d = el('div', 'card');
+  d.appendChild(el('h2', null, '📊 每日能量估算'));
+  const stat = el('div', 'stat-group');
+  stat.appendChild(statCard('基础代谢', energy.bmr, 'kcal / 天', 't1'));
+  stat.appendChild(statCard('预计每日总消耗', energy.tdee, 'kcal / 天', 't2'));
+  stat.appendChild(statCard('目标摄入', energy.target, 'kcal / 天', 't3'));
+  d.appendChild(stat);
+  const note = el('div', 'footnote');
+  note.innerHTML = '以上为<b>估算值</b>，不是人体真实消耗的精确测量。活动系数综合了工作性质、日常活动、运动与力量训练情况。';
+  d.appendChild(note);
+  return d;
+}
+
+function statCard(label, value, unit, cls) {
+  const c = el('div', 'stat-card ' + cls);
+  c.appendChild(el('div', 'stat-label', label));
+  c.appendChild(el('div', 'stat-value', value));
+  c.appendChild(el('div', 'stat-unit', unit));
+  return c;
+}
+
+function buildDailyTarget(energy, m) {
+  const card = el('div', 'card');
+  const h = el('h2'); h.innerHTML = '<span class="icon" style="background:#eefdfc;color:var(--primary);">🎯</span> 你的每日目标';
+  card.appendChild(h);
+
+  const stat = el('div', 'stat-group');
+  stat.appendChild(statCard('预计每日能量需求', energy.tdee, 'kcal / 天', 't1'));
+  stat.appendChild(statCard('建议每日摄入', energy.target, 'kcal / 天', 't2'));
+  stat.appendChild(statCard('目标缺口', '-' + energy.deficit, 'kcal / 天', 't3'));
+  card.appendChild(stat);
+
+  const mg = el('div', 'macro-grid');
+  mg.appendChild(macroCard('🥩', '蛋白质', m.protein + ' g', m.proteinKcal + ' kcal', 'protein'));
+  mg.appendChild(macroCard('🥑', '脂肪', m.fat + ' g', m.fatKcal + ' kcal', 'fat'));
+  mg.appendChild(macroCard('🍚', '碳水', m.carb + ' g', m.carbKcal + ' kcal', 'carbs'));
+  card.appendChild(mg);
+
+  const note = el('div', 'footnote');
+  note.innerHTML = '「建议每日摄入」是<b>可执行的初始目标（估算值）</b>，不是绝对正确值。建议执行 2～3 周后，根据实际体重变化（每周记录晨重、取 7 日平均）再校准。' +
+    '<br>体脂率按 BMI + 年龄估算（估算公式误差可能较大，仅供参考）。';
+  card.appendChild(note);
+  return card;
+}
+
+function macroCard(icon, name, grams, kcal, cls) {
+  const c = el('div', 'macro-card ' + cls);
+  c.appendChild(el('div', 'macro-name', icon + ' ' + name));
+  c.appendChild(el('div', 'macro-grams', grams));
+  c.appendChild(el('div', 'macro-kcal', kcal));
+  return c;
+}
+
+function buildMeals(p, dayPlan, targets, checks) {
+  const card = el('div', 'card');
+  const h = el('h2'); h.innerHTML = '<span class="icon" style="background:#f0fdf4;color:var(--green);">🍽️</span> 每天怎么吃';
+  card.appendChild(h);
+
+  dayPlan.meals.forEach(me => {
+    const mc = el('div', 'meal-card');
+    const head = el('div', 'meal-head');
+    head.appendChild(el('span', 'meal-name', me.name));
+    head.appendChild(el('span', 'meal-kcal', '约 ' + me.macros.kcal + ' kcal · 蛋白 ' + me.macros.p + 'g · 脂肪 ' + me.macros.f + 'g · 碳水 ' + me.macros.c + 'g'));
+    mc.appendChild(head);
+    me.items.forEach(it => {
+      const row = el('div', 'meal-item');
+      const amtStr = it.unit === '个' ? it.qty + ' 个' : (it.unit === 'ml' ? it.qty + ' ml' : it.grams + ' g');
+      row.appendChild(el('span', 'food', it.food.a));
+      row.appendChild(el('span', 'amt', amtStr));
+      row.appendChild(el('span', 'how', it.how));
+      mc.appendChild(row);
+    });
+    card.appendChild(mc);
+  });
+
+  // 替换机制（同类下拉框替换，选择后自动重新计算）
+  const swapBox = el('div', 'swap-selects');
+  const swapNote = el('div', 'swap-note');
+  swapNote.textContent = '同类替换：从下拉框选想吃的食材，系统会自动重新计算营养';
+  swapBox.appendChild(swapNote);
+  const exclude = collectExcludedFoods(p);
+  const roleLists = [
+    ['protein', ROLES.protein, '蛋白质'],
+    ['staple', ROLES.staple, '主食'],
+    ['veg', ROLES.veg, '蔬菜'],
+    ['oil', ROLES.oil, '食用油'],
+  ];
+  roleLists.forEach(([role, list, label]) => {
+    const avail = list.filter(n => !exclude.has(n));
+    const g = el('div', 'swap-select');
+    g.appendChild(el('label', null, label));
+    const sel = el('select');
+    if (!avail.length) {
+      const opt = el('option');
+      opt.value = '';
+      opt.textContent = '无可用食材';
+      sel.appendChild(opt);
+      sel.disabled = true;
+    } else {
+      const cur = dayPlan.sel[role];
+      avail.forEach(name => {
+        const opt = el('option');
+        opt.value = name;
+        opt.textContent = byName(name).a;
+        if (name === cur) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      sel.addEventListener('change', () => selectRoleFood(role, sel.value));
+    }
+    g.appendChild(sel);
+    swapBox.appendChild(g);
+  });
+  card.appendChild(swapBox);
+
+  // 现实执行检查器（已在管线中计算，避免重复）
+  const ck = el('div', 'section-title'); ck.innerHTML = '<span class="icon" style="background:#fff7ed;color:var(--orange);">🔍</span> 现实执行检查';
+  card.appendChild(ck);
+  const list = el('div', 'check-list');
+  checks.forEach(chk => list.appendChild(el('div', 'check-item-row ' + (chk.pass ? 'pass' : 'warn'), (chk.pass ? '✓ ' : '⚠ ') + chk.text)));
+  card.appendChild(list);
+
+  return card;
+}
+
+function buildPurchase(p, dayPlan) {
+  const card = el('div', 'card');
+  const h = el('h2'); h.innerHTML = '<span class="icon" style="background:#eef6ff;color:var(--blue);">🛒</span> 7 天采购计划';
+  card.appendChild(h);
+  const rows = buildPurchasePlan(dayPlan);
+  const table = el('table', 'buy');
+  const thead = el('tr');
+  ['食材', '7 天总用量', '建议购买量', '说明'].forEach(t => thead.appendChild(el('th', null, t)));
+  table.appendChild(thead);
+  rows.forEach(r => {
+    const tr = el('tr');
+    tr.appendChild(el('td', null, r.name));
+    tr.appendChild(el('td', 'num', r.grams + ' g'));
+    tr.appendChild(el('td', 'num', r.buy));
+    tr.appendChild(el('td', null, r.note));
+    table.appendChild(tr);
+  });
+  card.appendChild(table);
+  const note = el('div', 'footnote');
+  note.innerHTML = '采购优化原则：先减少食材种类、再提高同一食材跨餐复用、尽量贴近常见包装、减少易腐浪费。' +
+    (p.cook === 'eatout' ? '<br>你以外食为主：以上分量可作外食估量参考（主食约一拳、蛋白约一掌、蔬菜两拳），在家做饭的餐次按表采购即可。' : '') +
+    (p.socialMeals > 0 ? '<br>你每周约 ' + p.socialMeals + ' 次应酬：应酬日当餐尽量选清蒸/白灼，其余餐次可按计划执行，采购时可预留少量余量。' : '');
+  card.appendChild(note);
+  return card;
+}
+
+function buildExplanation(p, energy, m, dayPlan) {
+  const card = el('div', 'card');
+  const h = el('h2'); h.innerHTML = '<span class="icon" style="background:#f5f3ff;color:var(--purple);">💡</span> 为什么这么安排';
+  card.appendChild(h);
+
+  const det = el('div');
+  const rows = [
+    ['基础代谢', energy.bmr + ' kcal', 'Mifflin-St Jeor 公式估算'],
+    ['活动系数', energy.af, '综合工作性质 / 日常活动 / 运动 / 力量训练估算'],
+    ['预计每日消耗', energy.tdee + ' kcal', '基础代谢 × 活动系数（估算）'],
+    ['目标缺口', '-' + energy.deficit + ' kcal', '由你选择的减脂节奏决定'],
+    ['目标摄入', energy.target + ' kcal', '预计消耗 − 目标缺口'],
+    ['蛋白质', m.protein + ' g（约 ' + m.proteinKcal + ' kcal）', '按瘦体重约 ' + Math.round(m.lbm) + ' kg × ' + m.coef + ' g/kg'],
+    ['脂肪', m.fat + ' g（约 ' + m.fatKcal + ' kcal）', '约占目标热量的 ' + CFG.fatPctOfTarget + '%'],
+    ['碳水', m.carb + ' g（约 ' + m.carbKcal + ' kcal）', '剩余热量全部给碳水'],
+  ];
+  rows.forEach(r => {
+    const row = el('div', 'detail-row');
+    row.appendChild(el('span', 'label', r[0]));
+    row.appendChild(el('span', 'value', r[1] + '　' + r[2]));
+    det.appendChild(row);
+  });
+  card.appendChild(det);
+
+  const note = el('div', 'footnote');
+  note.innerHTML = CFG.weightBasisNote +
+    '<br>说明：本工具依据食物营养成分数据库配餐，只使用数据库中已有的食物营养数据；数据库中未提供的食物或营养素数值，本工具不会自行推测。' +
+    '<br>后续版本将支持「初始估算 → 执行 → 记录体重 → 观察趋势 → 校准目标」的动态调整，当前版本先给出可执行的初始方案。' +
+    '<br>本工具为面向普通健康成年人的<b>粗略减脂参考</b>，不构成医疗或营养处方。';
+  card.appendChild(note);
+  return card;
+}
+
+function renderError(msg) {
+  const resultArea = document.getElementById('result-area');
+  const placeholder = document.getElementById('placeholder-area');
+  resultArea.innerHTML = '';
+  resultArea.classList.remove('hidden');
+  placeholder.style.display = 'none';
+  const b = el('div', 'banner risk');
+  b.innerHTML = '⚠️ ' + esc(msg);
+  resultArea.appendChild(b);
+}
+
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+/* ---------------- 食材替换（下拉框选择食材后，重新计算） ---------------- */
+function selectRoleFood(role, pickedName) {
+  if (!pickedName) return;
+  const p = readProfile();
+  const exclude = collectExcludedFoods(p);
+  const list = role === 'protein' ? ROLES.protein : role === 'staple' ? ROLES.staple : role === 'veg' ? ROLES.veg : ROLES.oil;
+  const avail = list.filter(n => !exclude.has(n));
+  if (!avail.includes(pickedName)) return;
+  const newList = [pickedName, ...avail.filter(n => n !== pickedName)];
+  if (role === 'protein') ROLES.protein = newList;
+  else if (role === 'staple') ROLES.staple = newList;
+  else if (role === 'veg') ROLES.veg = newList;
+  else ROLES.oil = newList;
+  runPipeline();
+}
+
+/* ---------------- [9] PDF 导出层（保存按钮） ---------------- */
+const LABELS = {
+  sex: { male: '男', female: '女' },
+  pace: { maintain: '维持体重（缺口 0）', mild: '温和减脂（约 -300 kcal/天）', standard: '标准减脂（约 -500 kcal/天）', fast: '较快减脂（约 -700 kcal/天）' },
+  workType: { sedentary: '久坐办公室', light: '轻体力工作', medium: '中等体力工作', heavy: '重体力工作' },
+  dailyActivity: { minimal: '很少', low: '较少', medium: '较多', high: '很多' },
+  cook: { home: '自己做饭为主', both: '做饭 + 外食各半', eatout: '以外食为主' },
+  taste: { light: '清淡', moderate: '比较清淡', oily: '油腻', veryoily: '很油腻' },
+  breakfastHabit: { daily: '每天都吃', sometimes: '偶尔吃', rarely: '基本不吃' },
+  lunchScene: { home: '自己做', canteen: '吃食堂', takeout: '外卖', family: '家人做' },
+  dinnerScene: { home: '自己做', canteen: '吃食堂', takeout: '外卖', family: '家人做' },
+  nightEating: { none: '没有', sometimes: '偶尔有', severe: '有且严重' },
+  binge: { none: '没有', sometimes: '偶尔有', severe: '有且严重' },
+  drinking: { none: '不饮酒', sometimes: '偶尔饮酒', heavy: '有且大量' },
+  exerciseHabit: { none: '基本不运动', sometimes: '偶尔运动', '1-2': '每周 1～2 次', '3+': '每周 3 次以上' },
+  strengthHabit: { none: '无', sometimes: '偶尔', '1-2': '每周 1～2 次', '3+': '每周 3 次以上' },
+  mealCount: { 3: '一日三餐', 5: '一日五餐' },
+};
+function lbl(map, key) { return (map && map[key]) || String(key == null ? '' : key); }
+
+let lastResult = null;
+
+function setPdfBtn(visible) {
+  const btn = document.getElementById('pdfBtn');
+  if (!btn) return;
+  btn.classList.toggle('hidden', !visible);
+  if (!visible) { btn.disabled = false; btn.textContent = '⬇ 保存 PDF'; }
+}
+
+function todayStr() {
+  const d = new Date();
+  const p = n => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+}
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error('脚本加载失败：' + src));
+    document.head.appendChild(s);
+  });
+}
+
+function ensurePdfLibs() {
+  const tasks = [];
+  if (!window.jspdf || !window.jspdf.jsPDF) tasks.push(loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'));
+  if (!window.html2canvas) tasks.push(loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'));
+  return Promise.all(tasks);
+}
+
+// 生成 PDF 报告的各个区块（DOM），复用已有计算结果，不重新计算
+function buildReportSections(r) {
+  const p = r.p, energy = r.energy, m = r.macros, dp = r.dayPlan;
+  const sections = [];
+
+  // —— 标题 ——
+  const title = el('div', 'sec');
+  title.innerHTML = '<div class="ptitle">⚡ 带电操作减脂食谱</div>' +
+    '<div class="pdate">生成日期：' + todayStr() + '</div>';
+  sections.push(title);
+
+  // —— 基本情况 ——
+  const basic = el('div', 'sec');
+  basic.appendChild(el('h2', null, '基本情况'));
+  const kvRows = [
+    ['性别', lbl(LABELS.sex, p.sex)],
+    ['年龄', p.age + ' 岁'],
+    ['身高', p.height + ' cm'],
+    ['体重', p.weight + ' kg'],
+    ['体脂率（估算）', m.bfp + '%'],
+    ['瘦体重（LBM）', Math.round(m.lbm) + ' kg'],
+    ['目标节奏', lbl(LABELS.pace, p.pace)],
+    ['每日餐次', lbl(LABELS.mealCount, p.mealCount)],
+    ['工作性质', lbl(LABELS.workType, p.workType)],
+    ['日常活动量', lbl(LABELS.dailyActivity, p.dailyActivity)],
+    ['饮食方式', lbl(LABELS.cook, p.cook)],
+    ['口味', lbl(LABELS.taste, p.taste)],
+    ['早餐习惯', lbl(LABELS.breakfastHabit, p.breakfastHabit)],
+    ['午餐场景', lbl(LABELS.lunchScene, p.lunchScene)],
+    ['晚餐场景', lbl(LABELS.dinnerScene, p.dinnerScene)],
+    ['每周应酬', p.socialMeals + ' 次'],
+    ['运动习惯', lbl(LABELS.exerciseHabit, p.exerciseHabit)],
+    ['力量训练', lbl(LABELS.strengthHabit, p.strengthHabit)],
+    ['睡眠', p.sleepHours + ' 小时'],
+  ];
+  const extras = [];
+  if (p.currentDiet) extras.push(['当前饮食', p.currentDiet]);
+  if (p.equipment) extras.push(['运动器械', p.equipment]);
+  if (p.allergyDetail) extras.push(['过敏清单', p.allergyDetail]);
+  if (p.disease) extras.push(['身体疾病', p.disease]);
+  if (p.dietTaboo) extras.push(['饮食禁忌', p.dietTaboo]);
+  if (p.exerciseTaboo) extras.push(['运动禁忌', p.exerciseTaboo]);
+  if (p.otherHealth) extras.push(['其他异常', p.otherHealth]);
+  const tb = el('table', 'kv');
+  kvRows.concat(extras).forEach(rr => {
+    const tr = el('tr');
+    tr.appendChild(el('td', 'k', rr[0]));
+    tr.appendChild(el('td', 'v', esc(rr[1])));
+    tb.appendChild(tr);
+  });
+  basic.appendChild(tb);
+  sections.push(basic);
+
+  // —— 每日目标 ——
+  const goal = el('div', 'sec');
+  goal.appendChild(el('h2', null, '每日目标'));
+  const gtb = el('table', 'kv');
+  [
+    ['预计每日能量需求（TDEE）', energy.tdee + ' kcal'],
+    ['建议每日摄入', energy.target + ' kcal'],
+    ['目标缺口', '-' + energy.deficit + ' kcal/天'],
+    ['蛋白质', m.protein + ' g（约 ' + m.proteinKcal + ' kcal）'],
+    ['脂肪', m.fat + ' g（约 ' + m.fatKcal + ' kcal）'],
+    ['碳水化合物', m.carb + ' g（约 ' + m.carbKcal + ' kcal）'],
+  ].forEach(rr => {
+    const tr = el('tr');
+    tr.appendChild(el('td', 'k', rr[0]));
+    tr.appendChild(el('td', 'v', rr[1]));
+    gtb.appendChild(tr);
+  });
+  goal.appendChild(gtb);
+  goal.appendChild(el('div', 'note', '「建议每日摄入」为可执行的初始目标（估算值），建议执行 2～3 周后按实际体重变化校准。'));
+  sections.push(goal);
+
+  // —— 健康提示（如有） ——
+  if (r.screen.warnings.length) {
+    const wh = el('div', 'sec');
+    wh.appendChild(el('h2', null, '健康提示'));
+    r.screen.warnings.forEach(w => wh.appendChild(el('div', 'warn', '⚠ ' + w)));
+    sections.push(wh);
+  }
+
+  // —— 每天怎么吃 ——
+  const meals = el('div', 'sec');
+  meals.appendChild(el('h2', null, '每天怎么吃'));
+  dp.meals.forEach(me => {
+    const mc = el('div', 'meal');
+    mc.appendChild(el('b', null, me.name + '（约 ' + me.macros.kcal + ' kcal · 蛋白 ' + me.macros.p + 'g · 脂肪 ' + me.macros.f + 'g · 碳水 ' + me.macros.c + 'g）'));
+    const mt = el('table');
+    me.items.forEach(it => {
+      const amtStr = it.unit === '个' ? it.qty + ' 个' : (it.unit === 'ml' ? it.qty + ' ml' : it.grams + ' g');
+      const tr = el('tr');
+      tr.appendChild(el('td', null, it.food.a));
+      tr.appendChild(el('td', null, amtStr));
+      tr.appendChild(el('td', null, it.how));
+      mt.appendChild(tr);
+    });
+    mc.appendChild(mt);
+    meals.appendChild(mc);
+  });
+  sections.push(meals);
+
+  // —— 7 天采购计划 ——
+  const buy = el('div', 'sec');
+  buy.appendChild(el('h2', null, '7 天采购计划'));
+  const rows = buildPurchasePlan(dp);
+  const bt = el('table', 'buy');
+  const thead = el('tr');
+  ['食材', '7 天总用量', '建议购买量', '说明'].forEach(t => thead.appendChild(el('th', null, t)));
+  bt.appendChild(thead);
+  rows.forEach(rr => {
+    const tr = el('tr');
+    tr.appendChild(el('td', null, rr.name));
+    tr.appendChild(el('td', null, rr.grams + ' g'));
+    tr.appendChild(el('td', null, rr.buy));
+    tr.appendChild(el('td', null, rr.note));
+    bt.appendChild(tr);
+  });
+  buy.appendChild(bt);
+  buy.appendChild(el('div', 'note', '采购原则：先减少食材种类，再提高同一食材跨餐复用，尽量贴近常见包装、减少易腐浪费。'));
+  sections.push(buy);
+
+  // —— 现实执行检查 ——
+  const ck = el('div', 'sec');
+  ck.appendChild(el('h2', null, '现实执行检查'));
+  r.checks.forEach(chk => ck.appendChild(el('div', 'ck ' + (chk.pass ? 'pass' : 'warn'), (chk.pass ? '✓ ' : '⚠ ') + chk.text)));
+  sections.push(ck);
+
+  // —— 说明 ——
+  const exp = el('div', 'sec');
+  exp.appendChild(el('h2', null, '说明'));
+  const foot = el('div', 'foot');
+  foot.innerHTML = CFG.weightBasisNote + '<br>' +
+    '能量估算基于 Mifflin-St Jeor 公式与活动系数（综合工作 / 日常活动 / 运动 / 力量训练，范围 1.2～1.9）。' +
+    '蛋白质按瘦体重估算（减脂 ' + CFG.proteinPerKgLBM.lose + ' g/kg、维持 ' + CFG.proteinPerKgLBM.maintain + ' g/kg），脂肪约占目标热量 ' + CFG.fatPctOfTarget + '%，剩余热量给碳水。' +
+    '<br>本工具只使用《主要食物营养成分表（粗略）》中已有数据；数据库未提供的食物或营养素数值，本工具不会自行推测。' +
+    '<br>本方案为面向普通健康成年人的粗略减脂参考，不构成医疗或营养处方。';
+  exp.appendChild(foot);
+  sections.push(exp);
+
+  return sections;
+}
+
+async function downloadPdf() {
+  const btn = document.getElementById('pdfBtn');
+  if (!lastResult) return;
+  const holder = document.getElementById('pdfHolder');
+  try {
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ 正在生成 PDF…'; }
+    await ensurePdfLibs();
+    holder.innerHTML = '';
+    buildReportSections(lastResult).forEach(sec => holder.appendChild(sec));
+
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageW = 210, pageH = 297, margin = 10, contentW = pageW - margin * 2, fullH = pageH - margin * 2;
+    const secs = Array.from(holder.querySelectorAll('.sec'));
+    let y = margin;
+    for (const sec of secs) {
+      const canvas = await html2canvas(sec, { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: -window.scrollY });
+      const imgH = canvas.height * contentW / canvas.width;
+      if (imgH <= fullH) {
+        if (y + imgH > pageH - margin) { pdf.addPage(); y = margin; }
+        pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', margin, y, contentW, imgH);
+        y += imgH + 6;
+      } else {
+        // 单区块超过一整页时切片
+        if (y > margin) { pdf.addPage(); y = margin; }
+        const pxPerMm = canvas.width / contentW;
+        let srcY = 0, segMm = 0;
+        while (srcY < canvas.height) {
+          let segPx = Math.min(Math.round(fullH * pxPerMm), canvas.height - srcY);
+          const c2 = document.createElement('canvas');
+          c2.width = canvas.width; c2.height = segPx;
+          c2.getContext('2d').drawImage(canvas, 0, srcY, canvas.width, segPx, 0, 0, c2.width, c2.height);
+          segMm = segPx / pxPerMm;
+          pdf.addImage(c2.toDataURL('image/jpeg', 0.95), 'JPEG', margin, margin, contentW, segMm);
+          srcY += segPx;
+          if (srcY < canvas.height) pdf.addPage();
+        }
+        y = margin + segMm + 6;
+      }
+    }
+    pdf.save('带电操作减脂食谱_' + todayStr() + '.pdf');
+  } catch (err) {
+    console.error('PDF 生成失败，改用浏览器打印兜底：', err);
+    if (!holder.children.length) buildReportSections(lastResult).forEach(sec => holder.appendChild(sec));
+    if (typeof window.print === 'function') window.print();
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '⬇ 保存 PDF'; }
+  }
+}
+
+/* ---------------- 初始化 ---------------- */
+function initAllergyChecks() {
+  const box = document.getElementById('allergyChecks');
+  box.innerHTML = '';
+  Object.keys(ALLERGEN_MAP).forEach(key => {
+    const item = el('label', 'check-item');
+    const cb = el('input');
+    cb.type = 'checkbox'; cb.value = key;
+    item.appendChild(cb);
+    item.appendChild(document.createTextNode(ALLERGEN_MAP[key].label));
+    box.appendChild(item);
+  });
+}
+
+/* ---------------- 浮动「生成我的减脂方案」按钮：生成方案后、按钮不在视口内时悬浮，滑回原位时归位 ---------------- */
+function updateCalcFloat() {
+  const orig = document.getElementById('calcBtn');
+  const floatBtn = document.getElementById('calcFloatBtn');
+  if (!orig || !floatBtn) return;
+  const pdfBtn = document.getElementById('pdfBtn');
+  const resultGenerated = pdfBtn && !pdfBtn.classList.contains('hidden');
+  const rect = orig.getBoundingClientRect();
+  const vh = window.innerHeight;
+  // 按钮完全在视口上方或下方（不在视口内）时悬浮；未生成结果时不悬浮，避免遮挡表单
+  const outOfView = rect.top >= vh || rect.bottom <= 0;
+  floatBtn.classList.toggle('show', resultGenerated && outOfView);
+  // 移动端单列布局时与「保存 PDF」按钮垂直错开，避免互相遮挡
+  const isMobile = window.innerWidth <= 900;
+  floatBtn.style.bottom = (resultGenerated && isMobile) ? '82px' : '20px';
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('DOMContentLoaded', () => {
+    initAllergyChecks();
+    updateCalcFloat();
+  });
+  window.addEventListener('scroll', updateCalcFloat, { passive: true });
+  window.addEventListener('resize', updateCalcFloat);
+}
+
+/* ---------------- 导出（供 Node 测试） ---------------- */
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    FOOD_DB, ROLES, ALLERGEN_MAP, CFG,
+    mifflin, activityFactor, computeEnergy, estimateBfp, computeMacros,
+    collectExcludedFoods, healthScreen, generateDayPlan, buildPurchasePlan, runRealityCheck,
+    readProfile, byName, contrib, clamp, snap5, minFeasibleKcal, buildReportSections,
+  };
+}
+</script>
+</body>
+</html>
